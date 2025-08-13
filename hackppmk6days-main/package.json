@@ -7,8 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview",
-    "build:mobile": "npm run build && node scripts/mobile-build.js"
+    "preview": "vite preview"
   },
   "dependencies": {
     "react": "^18.2.0",
@@ -30,10 +29,5 @@
     "tailwindcss": "^3.3.3",
     "typescript": "^5.0.2",
     "vite": "^4.4.5"
-  },
-  "mobileConfig": {
-    "isPublic": true,
-    "buildTarget": "mobile-preview",
-    "deploymentType": "static"
   }
 }
