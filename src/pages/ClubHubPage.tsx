@@ -4,11 +4,15 @@ import { Link } from 'react-router-dom';
 import { ColorfulCard } from '../components/ColorfulCard';
 import { ColorfulButton } from '../components/ColorfulButton';
 import { ColorfulInput } from '../components/ColorfulInput';
+import { RSVPButton } from '../components/RSVPButton';
+import { ClubInteractionButtons } from '../components/ClubInteractionButtons';
 import { koreanClubs } from '../data/koreanClubs';
 import { koreanEvents } from '../data/koreanEvents';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 
 export const ClubHubPage: React.FC = () => {
+  const { user } = useAuth();
   const { language, t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showCulturalGuide, setShowCulturalGuide] = useState(false);
@@ -37,6 +41,13 @@ export const ClubHubPage: React.FC = () => {
         <p className="text-gray-600 text-lg">
           {t('캠퍼스의 다양한 동아리와 학회를 탐색하고 가입하세요', 'Explore and join various clubs and societies on campus')}
         </p>
+        {!user && (
+          <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-amber-800 text-sm">
+              {t('동아리를 저장하고 관심표시를 하려면 로그인하세요', 'Login to save clubs and show interest')}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Cultural Guide Banner */}
@@ -218,22 +229,29 @@ export const ClubHubPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Past Events */}
+                {/* Past Events with RSVP */}
                 {pastEvents.length > 0 && (
                   <div>
                     <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
                       <Calendar className="h-4 w-4 mr-1" />
                       {t('최근 이벤트', 'Recent Events')}
                     </h4>
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       {pastEvents.slice(0, 2).map((event) => (
-                        <Link
-                          key={event.id}
-                          to={`/event/${event.id}`}
-                          className="block text-sm text-blue-600 hover:text-blue-800 truncate"
-                        >
-                          {language === 'ko' ? event.title.ko : event.title.en}
-                        </Link>
+                        <div key={event.id} className="bg-mint-50 rounded-lg p-3">
+                          <Link
+                            to={`/event/${event.id}`}
+                            className="block text-sm font-medium text-mint-700 hover:text-mint-800 mb-2"
+                          >
+                            {language === 'ko' ? event.title.ko : event.title.en}
+                          </Link>
+                          <RSVPButton 
+                            eventId={event.id} 
+                            size="sm" 
+                            showCounts={false}
+                            className="mt-2"
+                          />
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -244,8 +262,19 @@ export const ClubHubPage: React.FC = () => {
                   <strong>{t('가입 조건:', 'Requirements:')}</strong> {clubRequirements}
                 </div>
 
+                {/* Club Interaction Buttons */}
+                <div className="border-t pt-4">
+                  <ClubInteractionButtons
+                    clubId={club.id}
+                    clubName={clubName}
+                    size="sm"
+                    showCounts={true}
+                    className="mb-3"
+                  />
+                </div>
+
                 {/* Actions */}
-                <div className="flex space-x-2 pt-2">
+                <div className="flex space-x-2">
                   <ColorfulButton size="sm" className="flex-1" disabled={!club.recruiting}>
                     {club.recruiting ? t('가입 신청', 'Apply') : t('모집 마감', 'Closed')}
                   </ColorfulButton>

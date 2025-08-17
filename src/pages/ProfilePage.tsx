@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   User, 
   Settings, 
@@ -20,42 +20,67 @@ import {
   Trophy,
   Gift,
   Target,
-  Calendar
+  Calendar,
+  Save,
+  X,
+  Plus,
+  Check,
+  AlertCircle,
+  TrendingUp,
+  Zap
 } from 'lucide-react';
 import { ColorfulCard } from '../components/ColorfulCard';
 import { ColorfulButton } from '../components/ColorfulButton';
+import { ProgressBar } from '../components/ProgressBar';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useGamificationProgress } from '../hooks/useGamificationProgress';
+import { supabase } from '../lib/supabase';
 import { gamificationFeatures, sampleBadges } from '../data/gamificationFeatures';
 import { StudentProfile, AIRecommendation } from '../types/profile';
 
 export const ProfilePage: React.FC = () => {
   const { language, t } = useLanguage();
+  const { user } = useAuth();
+  const { 
+    progress, 
+    achievements, 
+    loading: progressLoading, 
+    getProgressForReward, 
+    isRewardAchieved,
+    claimAchievement 
+  } = useGamificationProgress();
+  
   const [activeTab, setActiveTab] = useState<'profile' | 'privacy' | 'ai' | 'gamification'>('profile');
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string>('');
+  const [saveError, setSaveError] = useState<string>('');
+  const [newInterest, setNewInterest] = useState('');
 
-  // Sample profile data
+  // Profile state
   const [profile, setProfile] = useState<Partial<StudentProfile>>({
-    name: 'Sarah Kim',
-    email: 'sarah.kim@university.ac.kr',
-    university: '서울대학교 (Seoul National University)',
+    name: '',
+    email: '',
+    university: '',
     preferredLanguage: 'en',
     languageLevel: {
       korean: 'intermediate',
       english: 'native'
     },
-    interests: ['Technology', 'K-Pop', 'Cooking', 'Photography'],
-    academicMajor: 'Computer Science',
+    interests: [],
+    academicMajor: '',
     year: 'junior',
-    nationality: 'Korean-American',
+    nationality: '',
     culturalBackground: 'mixed',
     lookingForCulturalExchange: true,
-    points: 2450,
-    level: 7,
+    points: 0,
+    level: 1,
     badges: sampleBadges,
     streaks: {
-      eventAttendance: 12,
-      languageExchange: 8,
-      culturalEvents: 5
+      eventAttendance: 0,
+      languageExchange: 0,
+      culturalEvents: 0
     },
     privacy: {
       profileVisibility: 'university-only',
@@ -75,6 +100,269 @@ export const ProfilePage: React.FC = () => {
       notificationFrequency: 'weekly'
     }
   });
+
+  // Load profile data on component mount
+  useEffect(() => {
+    if (user) {
+      loadProfile();
+    }
+  }, [user]);
+
+  const loadProfile = async () => {
+    if (!user) return;
+
+    try {
+      console.log('Loading profile for user:', user.id);
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading profile:', error);
+        setSaveError(`Error loading profile: ${error.message}`);
+        return;
+      }
+
+      console.log('Profile data loaded:', data);
+
+      if (data) {
+        setProfile(prev => ({
+          ...prev,
+          name: data.name || '',
+          email: data.email || user.email || '',
+          university: data.university || '',
+          academicMajor: data.academic_major || '',
+          year: data.year || 'junior',
+          nationality: data.nationality || '',
+          culturalBackground: data.cultural_background || 'mixed',
+          lookingForCulturalExchange: data.looking_for_cultural_exchange ?? true,
+          preferredLanguage: data.preferred_language || 'en',
+          languageLevel: data.language_level || {
+            korean: 'intermediate',
+            english: 'native'
+          },
+          interests: data.interests || [],
+          points: data.points || 0,
+          level: data.level || 1,
+          streaks: data.streaks || {
+            eventAttendance: 0,
+            languageExchange: 0,
+            culturalEvents: 0
+          },
+          privacy: data.privacy || {
+            profileVisibility: 'university-only',
+            showRealName: true,
+            showUniversity: true,
+            showInterests: true,
+            showAvailability: false,
+            showLanguageLevel: true,
+            allowEventRecommendations: true,
+            allowDirectMessages: true
+          },
+          aiRecommendations: data.ai_recommendations || {
+            enabled: true,
+            culturalDiversityPreference: 'high',
+            eventTypes: ['cultural', 'academic', 'social'],
+            maxDistance: 10,
+            notificationFrequency: 'weekly'
+          }
+        }));
+      } else {
+        // No profile exists, set email from auth user
+        setProfile(prev => ({
+          ...prev,
+          email: user.email || ''
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      setSaveError(`Unexpected error loading profile: ${error}`);
+    }
+  };
+
+  const saveProfile = async () => {
+    if (!user) {
+      setSaveError('No user logged in');
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveMessage('');
+    setSaveError('');
+
+    try {
+      console.log('Saving profile for user:', user.id);
+      console.log('Profile data to save:', profile);
+
+      // Prepare the profile data with proper field mapping
+      const profileData = {
+        id: user.id,
+        name: profile.name?.trim() || null,
+        email: profile.email?.trim() || user.email || null,
+        university: profile.university?.trim() || null,
+        academic_major: profile.academicMajor?.trim() || null,
+        year: profile.year || 'junior',
+        nationality: profile.nationality?.trim() || null,
+        cultural_background: profile.culturalBackground || 'mixed',
+        looking_for_cultural_exchange: profile.lookingForCulturalExchange ?? true,
+        preferred_language: profile.preferredLanguage || 'en',
+        language_level: profile.languageLevel || {
+          korean: 'intermediate',
+          english: 'native'
+        },
+        interests: profile.interests || [],
+        points: profile.points || 0,
+        level: profile.level || 1,
+        streaks: profile.streaks || {
+          eventAttendance: 0,
+          languageExchange: 0,
+          culturalEvents: 0
+        },
+        privacy: profile.privacy || {
+          profileVisibility: 'university-only',
+          showRealName: true,
+          showUniversity: true,
+          showInterests: true,
+          showAvailability: false,
+          showLanguageLevel: true,
+          allowEventRecommendations: true,
+          allowDirectMessages: true
+        },
+        ai_recommendations: profile.aiRecommendations || {
+          enabled: true,
+          culturalDiversityPreference: 'high',
+          eventTypes: ['cultural', 'academic', 'social'],
+          maxDistance: 10,
+          notificationFrequency: 'weekly'
+        }
+      };
+
+      console.log('Formatted profile data:', profileData);
+
+      // First, check if profile exists
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      let result;
+      if (existingProfile) {
+        // Update existing profile
+        result = await supabase
+          .from('profiles')
+          .update(profileData)
+          .eq('id', user.id)
+          .select();
+      } else {
+        // Insert new profile
+        result = await supabase
+          .from('profiles')
+          .insert([profileData])
+          .select();
+      }
+
+      const { data, error } = result;
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      console.log('Profile saved successfully:', data);
+      setSaveMessage(t('프로필이 저장되었습니다!', 'Profile saved successfully!'));
+      setIsEditing(false);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (error: any) {
+      console.error('Error saving profile:', error);
+      let errorMessage = 'Unknown error occurred';
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.details) {
+        errorMessage = error.details;
+      } else if (error.hint) {
+        errorMessage = error.hint;
+      }
+      
+      setSaveError(`Error saving profile: ${errorMessage}`);
+      
+      // Clear error message after 5 seconds
+      setTimeout(() => setSaveError(''), 5000);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const updateProfile = (field: string, value: any) => {
+    setProfile(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const updateNestedProfile = (parent: string, field: string, value: any) => {
+    setProfile(prev => ({
+      ...prev,
+      [parent]: {
+        ...prev[parent as keyof typeof prev] as any,
+        [field]: value
+      }
+    }));
+  };
+
+  const addInterest = () => {
+    if (newInterest.trim() && !profile.interests?.includes(newInterest.trim())) {
+      setProfile(prev => ({
+        ...prev,
+        interests: [...(prev.interests || []), newInterest.trim()]
+      }));
+      setNewInterest('');
+    }
+  };
+
+  const removeInterest = (interest: string) => {
+    setProfile(prev => ({
+      ...prev,
+      interests: prev.interests?.filter(i => i !== interest) || []
+    }));
+  };
+
+  const handleClaimAchievement = async (achievementId: string) => {
+    const result = await claimAchievement(achievementId);
+    if (result.error) {
+      setSaveError(`Error claiming achievement: ${result.error}`);
+    } else {
+      setSaveMessage(t('리워드가 성공적으로 수령되었습니다!', 'Reward claimed successfully!'));
+      setTimeout(() => setSaveMessage(''), 3000);
+    }
+  };
+
+  // Get reward target counts based on gamification features
+  const getRewardTargets = () => {
+    const targets: { [key: number]: number } = {};
+    gamificationFeatures.forEach(feature => {
+      // Extract target numbers from descriptions
+      if (feature.id === 1) targets[1] = 10; // 10 international exchange events
+      if (feature.id === 2) targets[2] = 7;  // 7 day streak
+      if (feature.id === 3) targets[3] = 100; // Monthly leaderboard (assume 100 hours)
+      if (feature.id === 4) targets[4] = 5;  // 5 traditional culture events
+      if (feature.id === 5) targets[5] = 5;  // 5 countries
+      if (feature.id === 6) targets[6] = 3;  // 3 academic events monthly
+      if (feature.id === 7) targets[7] = 3;  // 3 MT events
+      if (feature.id === 8) targets[8] = 5;  // 5 hoesik events
+      if (feature.id === 9) targets[9] = 1;  // 1 speech contest
+      if (feature.id === 10) targets[10] = 3; // Food festival events
+    });
+    return targets;
+  };
+
+  const rewardTargets = getRewardTargets();
 
   const sampleRecommendations: AIRecommendation[] = [
     {
@@ -96,26 +384,6 @@ export const ProfilePage: React.FC = () => {
         ko: '한국의 IT 스타트업 문화를 체험할 수 있는 좋은 기회입니다',
         en: 'Great opportunity to experience Korean IT startup culture'
       }
-    },
-    {
-      eventId: '3',
-      score: 88,
-      reasons: [
-        {
-          ko: '문화교류 선호도와 일치',
-          en: 'Matches cultural exchange preference',
-          type: 'cultural-diversity'
-        },
-        {
-          ko: '한국 대학 문화 체험 기회',
-          en: 'Opportunity to experience Korean university culture',
-          type: 'social-opportunity'
-        }
-      ],
-      culturalInsight: {
-        ko: 'MT는 한국 대학생들의 중요한 사교 활동입니다',
-        en: 'MT is an important social activity for Korean university students'
-      }
     }
   ];
 
@@ -130,6 +398,13 @@ export const ProfilePage: React.FC = () => {
     '중앙대학교 (Chung-Ang University)',
     '경희대학교 (Kyung Hee University)',
     '이화여자대학교 (Ewha Womans University)'
+  ];
+
+  const majors = [
+    'Computer Science', 'Business Administration', 'Engineering', 'Medicine',
+    'Law', 'Psychology', 'Economics', 'International Relations',
+    'Korean Language & Literature', 'English Literature', 'Art & Design',
+    'Music', 'Mathematics', 'Physics', 'Chemistry', 'Biology'
   ];
 
   const TabButton: React.FC<{ 
@@ -160,6 +435,22 @@ export const ProfilePage: React.FC = () => {
         <p className="text-gray-600">
           {t('프로필을 설정하고 맞춤형 이벤트 추천을 받아보세요', 'Set up your profile and receive personalized event recommendations')}
         </p>
+        
+        {/* Save Message */}
+        {saveMessage && (
+          <div className="mt-4 p-3 rounded-lg bg-mint-100 text-mint-800 flex items-center">
+            <Check className="h-5 w-5 mr-2" />
+            {saveMessage}
+          </div>
+        )}
+
+        {/* Error Message */}
+        {saveError && (
+          <div className="mt-4 p-3 rounded-lg bg-red-100 text-red-800 flex items-center">
+            <AlertCircle className="h-5 w-5 mr-2" />
+            {saveError}
+          </div>
+        )}
       </div>
 
       {/* Profile Header Card */}
@@ -176,16 +467,16 @@ export const ProfilePage: React.FC = () => {
                 </button>
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-800">{profile.name}</h2>
-                <p className="text-blue-600 font-semibold">{profile.university}</p>
+                <h2 className="text-2xl font-bold text-gray-800">{profile.name || t('이름 없음', 'No Name')}</h2>
+                <p className="text-blue-600 font-semibold">{profile.university || t('대학교 미설정', 'University not set')}</p>
                 <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
                   <span className="flex items-center">
                     <GraduationCap className="h-4 w-4 mr-1" />
-                    {profile.academicMajor} • {profile.year}
+                    {profile.academicMajor || t('전공 미설정', 'Major not set')} • {profile.year}
                   </span>
                   <span className="flex items-center">
                     <Globe className="h-4 w-4 mr-1" />
-                    {profile.nationality}
+                    {profile.nationality || t('국적 미설정', 'Nationality not set')}
                   </span>
                 </div>
               </div>
@@ -243,29 +534,80 @@ export const ProfilePage: React.FC = () => {
                   <User className="h-5 w-5 mr-2 text-blue-600" />
                   {t('기본 정보', 'Basic Information')}
                 </h3>
-                <ColorfulButton 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setIsEditing(!isEditing)}
-                >
-                  <Edit3 className="h-4 w-4 mr-1" />
-                  {isEditing ? t('저장', 'Save') : t('편집', 'Edit')}
-                </ColorfulButton>
+                <div className="flex space-x-2">
+                  {isEditing ? (
+                    <>
+                      <ColorfulButton 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setIsEditing(false)}
+                        disabled={isSaving}
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        {t('취소', 'Cancel')}
+                      </ColorfulButton>
+                      <ColorfulButton 
+                        variant="primary" 
+                        size="sm"
+                        onClick={saveProfile}
+                        disabled={isSaving}
+                      >
+                        {isSaving ? (
+                          <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-1"></div>
+                        ) : (
+                          <Save className="h-4 w-4 mr-1" />
+                        )}
+                        {isSaving ? t('저장 중...', 'Saving...') : t('저장', 'Save')}
+                      </ColorfulButton>
+                    </>
+                  ) : (
+                    <ColorfulButton 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      <Edit3 className="h-4 w-4 mr-1" />
+                      {t('편집', 'Edit')}
+                    </ColorfulButton>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    {t('이름', 'Name')}
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={profile.name || ''}
+                      onChange={(e) => updateProfile('name', e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                      placeholder={t('이름을 입력하세요', 'Enter your name')}
+                    />
+                  ) : (
+                    <p className="text-gray-800">{profile.name || t('이름 미설정', 'Name not set')}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     {t('대학교', 'University')}
                   </label>
                   {isEditing ? (
-                    <select className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                    <select 
+                      value={profile.university || ''}
+                      onChange={(e) => updateProfile('university', e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">{t('대학교를 선택하세요', 'Select your university')}</option>
                       {universities.map((uni) => (
                         <option key={uni} value={uni}>{uni}</option>
                       ))}
                     </select>
                   ) : (
-                    <p className="text-gray-800">{profile.university}</p>
+                    <p className="text-gray-800">{profile.university || t('대학교 미설정', 'University not set')}</p>
                   )}
                 </div>
 
@@ -273,14 +615,58 @@ export const ProfilePage: React.FC = () => {
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     {t('전공', 'Major')}
                   </label>
-                  <p className="text-gray-800">{profile.academicMajor}</p>
+                  {isEditing ? (
+                    <select
+                      value={profile.academicMajor || ''}
+                      onChange={(e) => updateProfile('academicMajor', e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">{t('전공을 선택하세요', 'Select your major')}</option>
+                      {majors.map((major) => (
+                        <option key={major} value={major}>{major}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="text-gray-800">{profile.academicMajor || t('전공 미설정', 'Major not set')}</p>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     {t('학년', 'Year')}
                   </label>
-                  <p className="text-gray-800 capitalize">{profile.year}</p>
+                  {isEditing ? (
+                    <select
+                      value={profile.year || 'junior'}
+                      onChange={(e) => updateProfile('year', e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="freshman">{t('1학년', 'Freshman')}</option>
+                      <option value="sophomore">{t('2학년', 'Sophomore')}</option>
+                      <option value="junior">{t('3학년', 'Junior')}</option>
+                      <option value="senior">{t('4학년', 'Senior')}</option>
+                      <option value="graduate">{t('대학원생', 'Graduate')}</option>
+                    </select>
+                  ) : (
+                    <p className="text-gray-800 capitalize">{profile.year}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    {t('국적', 'Nationality')}
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={profile.nationality || ''}
+                      onChange={(e) => updateProfile('nationality', e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                      placeholder={t('국적을 입력하세요', 'Enter your nationality')}
+                    />
+                  ) : (
+                    <p className="text-gray-800">{profile.nationality || t('국적 미설정', 'Nationality not set')}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -300,18 +686,26 @@ export const ProfilePage: React.FC = () => {
                     {t('선호 언어', 'Preferred Language')}
                   </label>
                   <div className="flex space-x-2">
-                    <button className={`px-4 py-2 rounded-lg font-semibold ${
-                      profile.preferredLanguage === 'ko' 
-                        ? 'bg-blue-500 text-white' 
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
+                    <button 
+                      onClick={() => isEditing && updateProfile('preferredLanguage', 'ko')}
+                      disabled={!isEditing}
+                      className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                        profile.preferredLanguage === 'ko' 
+                          ? 'bg-blue-500 text-white' 
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      } ${!isEditing ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
                       한국어
                     </button>
-                    <button className={`px-4 py-2 rounded-lg font-semibold ${
-                      profile.preferredLanguage === 'en' 
-                        ? 'bg-blue-500 text-white' 
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
+                    <button 
+                      onClick={() => isEditing && updateProfile('preferredLanguage', 'en')}
+                      disabled={!isEditing}
+                      className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                        profile.preferredLanguage === 'en' 
+                          ? 'bg-blue-500 text-white' 
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      } ${!isEditing ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
                       English
                     </button>
                   </div>
@@ -321,18 +715,50 @@ export const ProfilePage: React.FC = () => {
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     {t('언어 수준', 'Language Level')}
                   </label>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span>{t('한국어', 'Korean')}</span>
-                      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold capitalize">
-                        {profile.languageLevel?.korean}
-                      </span>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <span>{t('한국어', 'Korean')}</span>
+                        {isEditing && (
+                          <select
+                            value={profile.languageLevel?.korean || 'intermediate'}
+                            onChange={(e) => updateNestedProfile('languageLevel', 'korean', e.target.value)}
+                            className="text-sm border border-gray-300 rounded px-2 py-1"
+                          >
+                            <option value="beginner">{t('초급', 'Beginner')}</option>
+                            <option value="intermediate">{t('중급', 'Intermediate')}</option>
+                            <option value="advanced">{t('고급', 'Advanced')}</option>
+                            <option value="native">{t('원어민', 'Native')}</option>
+                          </select>
+                        )}
+                      </div>
+                      {!isEditing && (
+                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold capitalize">
+                          {profile.languageLevel?.korean}
+                        </span>
+                      )}
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span>{t('영어', 'English')}</span>
-                      <span className="px-3 py-1 bg-mint-100 text-mint-800 rounded-full text-sm font-semibold capitalize">
-                        {profile.languageLevel?.english}
-                      </span>
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <span>{t('영어', 'English')}</span>
+                        {isEditing && (
+                          <select
+                            value={profile.languageLevel?.english || 'native'}
+                            onChange={(e) => updateNestedProfile('languageLevel', 'english', e.target.value)}
+                            className="text-sm border border-gray-300 rounded px-2 py-1"
+                          >
+                            <option value="beginner">{t('초급', 'Beginner')}</option>
+                            <option value="intermediate">{t('중급', 'Intermediate')}</option>
+                            <option value="advanced">{t('고급', 'Advanced')}</option>
+                            <option value="native">{t('원어민', 'Native')}</option>
+                          </select>
+                        )}
+                      </div>
+                      {!isEditing && (
+                        <span className="px-3 py-1 bg-mint-100 text-mint-800 rounded-full text-sm font-semibold capitalize">
+                          {profile.languageLevel?.english}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -345,6 +771,8 @@ export const ProfilePage: React.FC = () => {
                     <input 
                       type="checkbox" 
                       checked={profile.lookingForCulturalExchange}
+                      onChange={(e) => isEditing && updateProfile('lookingForCulturalExchange', e.target.checked)}
+                      disabled={!isEditing}
                       className="rounded"
                     />
                     <span className="text-gray-800">
@@ -364,50 +792,74 @@ export const ProfilePage: React.FC = () => {
                 {t('관심사', 'Interests')}
               </h3>
 
-              <div className="flex flex-wrap gap-2">
-                {profile.interests?.map((interest, index) => (
-                  <span 
-                    key={index}
-                    className="px-4 py-2 bg-gradient-accent text-white rounded-full text-sm font-semibold shadow-md"
-                  >
-                    {interest}
-                  </span>
-                ))}
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {profile.interests?.map((interest, index) => (
+                    <div key={index} className="flex items-center">
+                      <span className="px-4 py-2 bg-gradient-accent text-white rounded-full text-sm font-semibold shadow-md">
+                        {interest}
+                      </span>
+                      {isEditing && (
+                        <button
+                          onClick={() => removeInterest(interest)}
+                          className="ml-1 p-1 text-red-500 hover:bg-red-100 rounded-full"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
                 {isEditing && (
-                  <button className="px-4 py-2 border-2 border-dashed border-gray-300 rounded-full text-sm text-gray-500 hover:border-blue-500 hover:text-blue-500">
-                    + {t('추가', 'Add')}
-                  </button>
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      value={newInterest}
+                      onChange={(e) => setNewInterest(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && addInterest()}
+                      placeholder={t('새 관심사 추가', 'Add new interest')}
+                      className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                    <ColorfulButton
+                      variant="outline"
+                      size="sm"
+                      onClick={addInterest}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </ColorfulButton>
+                  </div>
                 )}
               </div>
             </div>
           </ColorfulCard>
 
-          {/* Availability */}
+          {/* Cultural Background */}
           <ColorfulCard>
             <div className="p-6">
               <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                <Clock className="h-5 w-5 mr-2 text-purple-600" />
-                {t('활동 가능 시간', 'Availability')}
+                <Globe className="h-5 w-5 mr-2 text-purple-600" />
+                {t('문화적 배경', 'Cultural Background')}
               </h3>
 
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    {t('선호 시간대', 'Preferred Time Slots')}
+                    {t('문화적 배경', 'Cultural Background')}
                   </label>
-                  <div className="flex flex-wrap gap-2">
-                    {['morning', 'afternoon', 'evening'].map((slot) => (
-                      <button
-                        key={slot}
-                        className="px-4 py-2 bg-purple-100 text-purple-800 rounded-lg text-sm font-semibold"
-                      >
-                        {t(
-                          slot === 'morning' ? '오전' : slot === 'afternoon' ? '오후' : '저녁',
-                          slot === 'morning' ? 'Morning' : slot === 'afternoon' ? 'Afternoon' : 'Evening'
-                        )}
-                      </button>
-                    ))}
-                  </div>
+                  {isEditing ? (
+                    <select
+                      value={profile.culturalBackground || 'mixed'}
+                      onChange={(e) => updateProfile('culturalBackground', e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="korean">{t('한국', 'Korean')}</option>
+                      <option value="international">{t('국제', 'International')}</option>
+                      <option value="mixed">{t('혼합', 'Mixed')}</option>
+                    </select>
+                  ) : (
+                    <p className="text-gray-800 capitalize">{profile.culturalBackground}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -418,10 +870,27 @@ export const ProfilePage: React.FC = () => {
       {activeTab === 'privacy' && (
         <ColorfulCard>
           <div className="p-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-              <Shield className="h-5 w-5 mr-2 text-green-600" />
-              {t('프라이버시 설정', 'Privacy Settings')}
-            </h3>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-800 flex items-center">
+                <Shield className="h-5 w-5 mr-2 text-green-600" />
+                {t('프라이버시 설정', 'Privacy Settings')}
+              </h3>
+              {isEditing && (
+                <ColorfulButton 
+                  variant="primary" 
+                  size="sm"
+                  onClick={saveProfile}
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-1"></div>
+                  ) : (
+                    <Save className="h-4 w-4 mr-1" />
+                  )}
+                  {isSaving ? t('저장 중...', 'Saving...') : t('저장', 'Save')}
+                </ColorfulButton>
+              )}
+            </div>
 
             <div className="space-y-6">
               <div>
@@ -441,6 +910,7 @@ export const ProfilePage: React.FC = () => {
                         name="visibility" 
                         value={option.value}
                         checked={profile.privacy?.profileVisibility === option.value}
+                        onChange={(e) => updateNestedProfile('privacy', 'profileVisibility', e.target.value)}
                         className="text-blue-600"
                       />
                       {option.icon}
@@ -470,6 +940,7 @@ export const ProfilePage: React.FC = () => {
                         <input 
                           type="checkbox" 
                           checked={profile.privacy?.[setting.key as keyof typeof profile.privacy] as boolean}
+                          onChange={(e) => updateNestedProfile('privacy', setting.key, e.target.checked)}
                           className="rounded text-blue-600"
                         />
                         {profile.privacy?.[setting.key as keyof typeof profile.privacy] ? 
@@ -491,10 +962,27 @@ export const ProfilePage: React.FC = () => {
           {/* AI Settings */}
           <ColorfulCard>
             <div className="p-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                <Sparkles className="h-5 w-5 mr-2 text-purple-600" />
-                {t('AI 추천 설정', 'AI Recommendation Settings')}
-              </h3>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-800 flex items-center">
+                  <Sparkles className="h-5 w-5 mr-2 text-purple-600" />
+                  {t('AI 추천 설정', 'AI Recommendation Settings')}
+                </h3>
+                {isEditing && (
+                  <ColorfulButton 
+                    variant="primary" 
+                    size="sm"
+                    onClick={saveProfile}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? (
+                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-1"></div>
+                    ) : (
+                      <Save className="h-4 w-4 mr-1" />
+                    )}
+                    {isSaving ? t('저장 중...', 'Saving...') : t('저장', 'Save')}
+                  </ColorfulButton>
+                )}
+              </div>
 
               <div className="space-y-6">
                 <div>
@@ -509,6 +997,7 @@ export const ProfilePage: React.FC = () => {
                     ].map((option) => (
                       <button
                         key={option.value}
+                        onClick={() => updateNestedProfile('aiRecommendations', 'culturalDiversityPreference', option.value)}
                         className={`px-4 py-2 rounded-lg font-semibold text-white ${option.color} ${
                           profile.aiRecommendations?.culturalDiversityPreference === option.value 
                             ? 'ring-2 ring-offset-2 ring-blue-500' 
@@ -525,7 +1014,11 @@ export const ProfilePage: React.FC = () => {
                   <label className="block text-sm font-semibold text-gray-700 mb-3">
                     {t('알림 빈도', 'Notification Frequency')}
                   </label>
-                  <select className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                  <select 
+                    value={profile.aiRecommendations?.notificationFrequency || 'weekly'}
+                    onChange={(e) => updateNestedProfile('aiRecommendations', 'notificationFrequency', e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                  >
                     <option value="daily">{t('매일', 'Daily')}</option>
                     <option value="weekly">{t('주간', 'Weekly')}</option>
                     <option value="monthly">{t('월간', 'Monthly')}</option>
@@ -623,6 +1116,120 @@ export const ProfilePage: React.FC = () => {
             </ColorfulCard>
           </div>
 
+          {/* Progress Tracking */}
+          <ColorfulCard>
+            <div className="p-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                <TrendingUp className="h-5 w-5 mr-2 text-green-600" />
+                {t('리워드 진행 상황', 'Reward Progress')}
+              </h3>
+
+              {progressLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                  <span className="ml-2 text-gray-600">{t('진행 상황 로딩 중...', 'Loading progress...')}</span>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {gamificationFeatures.map((feature) => {
+                    const userProgress = getProgressForReward(feature.id);
+                    const isAchieved = isRewardAchieved(feature.id);
+                    const targetCount = rewardTargets[feature.id] || 10;
+                    const currentCount = userProgress?.currentCount || 0;
+                    
+                    const colorMap: { [key: string]: 'blue' | 'mint' | 'purple' | 'green' | 'orange' } = {
+                      cultural: 'blue',
+                      language: 'mint',
+                      volunteer: 'green',
+                      social: 'purple',
+                      academic: 'orange',
+                      special: 'purple'
+                    };
+
+                    return (
+                      <div key={feature.id} className="border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-all">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <h4 className="font-bold text-gray-800 mb-2">
+                              {language === 'ko' ? feature.title.ko : feature.title.en}
+                            </h4>
+                            <p className="text-sm text-gray-600 mb-3">
+                              {language === 'ko' ? feature.description.ko : feature.description.en}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2 ml-4">
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                              feature.category === 'cultural' ? 'bg-blue-100 text-blue-800' :
+                              feature.category === 'language' ? 'bg-mint-100 text-mint-800' :
+                              feature.category === 'volunteer' ? 'bg-green-100 text-green-800' :
+                              feature.category === 'social' ? 'bg-purple-100 text-purple-800' :
+                              feature.category === 'academic' ? 'bg-orange-100 text-orange-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {feature.category}
+                            </span>
+                            {isAchieved && (
+                              <div className="flex items-center space-x-1">
+                                <Zap className="h-4 w-4 text-yellow-500" />
+                                <span className="text-xs font-semibold text-yellow-600">
+                                  {t('완료', 'Completed')}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <ProgressBar
+                          current={currentCount}
+                          target={targetCount}
+                          color={colorMap[feature.category] || 'blue'}
+                          size="lg"
+                          reward={feature.reward}
+                          isCompleted={isAchieved}
+                          className="mb-3"
+                        />
+
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">
+                            {t('진행률', 'Progress')}: {Math.min(100, Math.round((currentCount / targetCount) * 100))}%
+                          </span>
+                          <span className="text-xs font-semibold text-red-600 bg-red-50 px-2 py-1 rounded">
+                            🎁 {feature.reward}
+                          </span>
+                        </div>
+
+                        {isAchieved && (
+                          <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <Check className="h-5 w-5 text-green-600" />
+                                <span className="text-green-800 font-semibold">
+                                  {t('목표 달성! 리워드를 받을 수 있습니다.', 'Goal achieved! You can claim your reward.')}
+                                </span>
+                              </div>
+                              <ColorfulButton
+                                variant="primary"
+                                size="sm"
+                                onClick={() => {
+                                  // In a real app, this would claim the reward
+                                  setSaveMessage(t('리워드가 수령되었습니다!', 'Reward claimed!'));
+                                  setTimeout(() => setSaveMessage(''), 3000);
+                                }}
+                              >
+                                <Gift className="h-4 w-4 mr-1" />
+                                {t('수령', 'Claim')}
+                              </ColorfulButton>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </ColorfulCard>
+
           {/* Badges */}
           <ColorfulCard>
             <div className="p-6">
@@ -657,43 +1264,59 @@ export const ProfilePage: React.FC = () => {
             </div>
           </ColorfulCard>
 
-          {/* Gamification Features */}
-          <ColorfulCard>
-            <div className="p-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                <Gift className="h-5 w-5 mr-2 text-red-600" />
-                {t('게임화 기능 & 리워드', 'Gamification Features & Rewards')}
-              </h3>
+          {/* Completed Achievements */}
+          {achievements.length > 0 && (
+            <ColorfulCard>
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                  <Trophy className="h-5 w-5 mr-2 text-gold-600" />
+                  {t('완료된 성취', 'Completed Achievements')}
+                </h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {gamificationFeatures.map((feature) => (
-                  <div key={feature.id} className="border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-all">
-                    <h4 className="font-bold text-gray-800 mb-2">
-                      {language === 'ko' ? feature.title.ko : feature.title.en}
-                    </h4>
-                    <p className="text-sm text-gray-600 mb-3">
-                      {language === 'ko' ? feature.description.ko : feature.description.en}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        feature.category === 'cultural' ? 'bg-blue-100 text-blue-800' :
-                        feature.category === 'language' ? 'bg-mint-100 text-mint-800' :
-                        feature.category === 'volunteer' ? 'bg-green-100 text-green-800' :
-                        feature.category === 'social' ? 'bg-purple-100 text-purple-800' :
-                        feature.category === 'academic' ? 'bg-orange-100 text-orange-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {feature.category}
-                      </span>
-                      <span className="text-xs font-semibold text-red-600 bg-red-50 px-2 py-1 rounded">
-                        🎁 {feature.reward}
-                      </span>
+                <div className="space-y-4">
+                  {achievements.map((achievement) => (
+                    <div key={achievement.id} className="border border-green-200 rounded-xl p-4 bg-green-50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-bold text-green-800">
+                            {language === 'ko' ? achievement.rewardTitle.ko : achievement.rewardTitle.en}
+                          </h4>
+                          <p className="text-sm text-green-600 mt-1">
+                            {language === 'ko' ? achievement.rewardDescription.ko : achievement.rewardDescription.en}
+                          </p>
+                          <div className="flex items-center space-x-2 mt-2">
+                            <span className="text-xs text-green-600">
+                              {t('완료일', 'Completed')}: {new Date(achievement.completedAt).toLocaleDateString()}
+                            </span>
+                            <span className="text-xs font-semibold text-red-600 bg-red-100 px-2 py-1 rounded">
+                              🎁 {achievement.rewardPrize}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          {achievement.claimed ? (
+                            <div className="flex items-center space-x-1 text-green-600">
+                              <Check className="h-4 w-4" />
+                              <span className="text-sm font-semibold">{t('수령완료', 'Claimed')}</span>
+                            </div>
+                          ) : (
+                            <ColorfulButton
+                              variant="primary"
+                              size="sm"
+                              onClick={() => handleClaimAchievement(achievement.id)}
+                            >
+                              <Gift className="h-4 w-4 mr-1" />
+                              {t('수령', 'Claim')}
+                            </ColorfulButton>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          </ColorfulCard>
+            </ColorfulCard>
+          )}
         </div>
       )}
     </div>
