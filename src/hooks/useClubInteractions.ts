@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -21,61 +21,83 @@ export const useClubInteractions = (clubId: string) => {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (clubId) {
-      loadInteractions();
-    }
-  }, [clubId, user]);
-
-  const loadInteractions = async () => {
+  const loadInteractions = useCallback(async () => {
+    if (!clubId) return;
+    
     try {
       setLoading(true);
+      console.log('Loading interactions for club:', clubId, 'user:', user?.id);
 
-      // Get interaction counts
-      const { data: counts } = await supabase
+      // Get interaction counts - this should work for everyone
+      const { data: counts, error: countsError } = await supabase
         .rpc('get_club_interaction_counts', { club_uuid: clubId });
 
+      if (countsError) {
+        console.error('Error loading counts:', countsError);
+      }
+
       const countsData = counts?.[0] || { saved_count: 0, hearts_count: 0, shares_count: 0 };
+      console.log('Counts data:', countsData);
 
       let userInteractions = { is_saved: false, is_hearted: false };
 
       // Get user-specific interactions if logged in
       if (user) {
-        const { data: userData } = await supabase
+        const { data: userData, error: userError } = await supabase
           .rpc('get_user_club_interactions', { 
             user_uuid: user.id, 
             club_uuid: clubId 
           });
 
-        userInteractions = userData?.[0] || { is_saved: false, is_hearted: false };
+        if (userError) {
+          console.error('Error loading user interactions:', userError);
+        } else {
+          userInteractions = userData?.[0] || { is_saved: false, is_hearted: false };
+          console.log('User interactions:', userInteractions);
+        }
       }
 
       setInteractions({
         isSaved: userInteractions.is_saved,
         isHearted: userInteractions.is_hearted,
-        savedCount: Number(countsData.saved_count),
-        heartsCount: Number(countsData.hearts_count),
-        sharesCount: Number(countsData.shares_count)
+        savedCount: Number(countsData.saved_count) || 0,
+        heartsCount: Number(countsData.hearts_count) || 0,
+        sharesCount: Number(countsData.shares_count) || 0
       });
     } catch (error) {
       console.error('Error loading club interactions:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [clubId, user]);
 
-  const toggleSaved = async () => {
-    if (!user) return;
+  useEffect(() => {
+    loadInteractions();
+  }, [loadInteractions]);
+
+  const toggleSaved = useCallback(async () => {
+    if (!user || !clubId) {
+      console.log('User not authenticated or no club ID');
+      return;
+    }
+
+    console.log('Toggling saved for club:', clubId, 'current state:', interactions.isSaved);
 
     try {
       if (interactions.isSaved) {
         // Remove from saved
-        await supabase
+        const { error } = await supabase
           .from('saved_clubs')
           .delete()
           .eq('user_id', user.id)
           .eq('club_id', clubId);
 
+        if (error) {
+          console.error('Error removing saved club:', error);
+          return;
+        }
+
+        console.log('Successfully removed from saved');
         setInteractions(prev => ({
           ...prev,
           isSaved: false,
@@ -83,13 +105,19 @@ export const useClubInteractions = (clubId: string) => {
         }));
       } else {
         // Add to saved
-        await supabase
+        const { error } = await supabase
           .from('saved_clubs')
           .insert({
             user_id: user.id,
             club_id: clubId
           });
 
+        if (error) {
+          console.error('Error adding saved club:', error);
+          return;
+        }
+
+        console.log('Successfully added to saved');
         setInteractions(prev => ({
           ...prev,
           isSaved: true,
@@ -99,20 +127,31 @@ export const useClubInteractions = (clubId: string) => {
     } catch (error) {
       console.error('Error toggling saved club:', error);
     }
-  };
+  }, [user, clubId, interactions.isSaved]);
 
-  const toggleHeart = async () => {
-    if (!user) return;
+  const toggleHeart = useCallback(async () => {
+    if (!user || !clubId) {
+      console.log('User not authenticated or no club ID');
+      return;
+    }
+
+    console.log('Toggling heart for club:', clubId, 'current state:', interactions.isHearted);
 
     try {
       if (interactions.isHearted) {
         // Remove heart
-        await supabase
+        const { error } = await supabase
           .from('club_hearts')
           .delete()
           .eq('user_id', user.id)
           .eq('club_id', clubId);
 
+        if (error) {
+          console.error('Error removing club heart:', error);
+          return;
+        }
+
+        console.log('Successfully removed heart');
         setInteractions(prev => ({
           ...prev,
           isHearted: false,
@@ -120,13 +159,19 @@ export const useClubInteractions = (clubId: string) => {
         }));
       } else {
         // Add heart
-        await supabase
+        const { error } = await supabase
           .from('club_hearts')
           .insert({
             user_id: user.id,
             club_id: clubId
           });
 
+        if (error) {
+          console.error('Error adding club heart:', error);
+          return;
+        }
+
+        console.log('Successfully added heart');
         setInteractions(prev => ({
           ...prev,
           isHearted: true,
@@ -136,19 +181,27 @@ export const useClubInteractions = (clubId: string) => {
     } catch (error) {
       console.error('Error toggling club heart:', error);
     }
-  };
+  }, [user, clubId, interactions.isHearted]);
 
-  const shareClub = async (shareType: 'link' | 'email' | 'social' = 'link') => {
-    if (!user) return;
+  const shareClub = useCallback(async (shareType: 'link' | 'email' | 'social' = 'link') => {
+    if (!user || !clubId) {
+      console.log('User not authenticated or no club ID');
+      return;
+    }
 
     try {
-      await supabase
+      const { error } = await supabase
         .from('club_shares')
         .insert({
           user_id: user.id,
           club_id: clubId,
           share_type: shareType
         });
+
+      if (error) {
+        console.error('Error sharing club:', error);
+        return;
+      }
 
       setInteractions(prev => ({
         ...prev,
@@ -157,7 +210,7 @@ export const useClubInteractions = (clubId: string) => {
     } catch (error) {
       console.error('Error sharing club:', error);
     }
-  };
+  }, [user, clubId]);
 
   return {
     interactions,

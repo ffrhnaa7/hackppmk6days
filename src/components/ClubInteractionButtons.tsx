@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, Bookmark, Share2, Copy, Mail, MessageSquare, Check } from 'lucide-react';
+import { Heart, Bookmark, Share2, Copy, Mail, MessageSquare, Check, Loader2 } from 'lucide-react';
 import { ColorfulButton } from './ColorfulButton';
 import { useClubInteractions } from '../hooks/useClubInteractions';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -21,10 +21,33 @@ export const ClubInteractionButtons: React.FC<ClubInteractionButtonsProps> = ({
   className = ''
 }) => {
   const { user } = useAuth();
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
   const { interactions, loading, toggleSaved, toggleHeart, shareClub } = useClubInteractions(clubId);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  const handleSave = async () => {
+    if (!user) {
+      alert(t('로그인이 필요합니다', 'Please log in to save clubs'));
+      return;
+    }
+    
+    setActionLoading('save');
+    await toggleSaved();
+    setActionLoading(null);
+  };
+
+  const handleHeart = async () => {
+    if (!user) {
+      alert(t('로그인이 필요합니다', 'Please log in to like clubs'));
+      return;
+    }
+    
+    setActionLoading('heart');
+    await toggleHeart();
+    setActionLoading(null);
+  };
 
   const handleShare = async (type: 'link' | 'email' | 'social') => {
     const clubUrl = `${window.location.origin}/club/${clubId}`;
@@ -35,7 +58,9 @@ export const ClubInteractionButtons: React.FC<ClubInteractionButtonsProps> = ({
           await navigator.clipboard.writeText(clubUrl);
           setCopySuccess(true);
           setTimeout(() => setCopySuccess(false), 2000);
-          await shareClub('link');
+          if (user) {
+            await shareClub('link');
+          }
         } catch (error) {
           console.error('Failed to copy link:', error);
         }
@@ -47,7 +72,9 @@ export const ClubInteractionButtons: React.FC<ClubInteractionButtonsProps> = ({
           `Hi! I thought you might be interested in this club: ${clubName}\n\nCheck it out here: ${clubUrl}\n\nBest regards!`
         );
         window.open(`mailto:?subject=${emailSubject}&body=${emailBody}`);
-        await shareClub('email');
+        if (user) {
+          await shareClub('email');
+        }
         break;
         
       case 'social':
@@ -59,16 +86,20 @@ export const ClubInteractionButtons: React.FC<ClubInteractionButtonsProps> = ({
               text: `Check out ${clubName} club!`,
               url: clubUrl
             });
-            await shareClub('social');
+            if (user) {
+              await shareClub('social');
+            }
           } catch (error) {
-            // Fallback to Twitter
             window.open(`https://twitter.com/intent/tweet?text=${shareText}`);
-            await shareClub('social');
+            if (user) {
+              await shareClub('social');
+            }
           }
         } else {
-          // Fallback to Twitter
           window.open(`https://twitter.com/intent/tweet?text=${shareText}`);
-          await shareClub('social');
+          if (user) {
+            await shareClub('social');
+          }
         }
         break;
     }
@@ -94,49 +125,54 @@ export const ClubInteractionButtons: React.FC<ClubInteractionButtonsProps> = ({
       <ColorfulButton
         variant={interactions.isSaved ? 'primary' : 'outline'}
         size={buttonSize}
-        onClick={toggleSaved}
-        disabled={!user}
+        onClick={handleSave}
+        disabled={actionLoading === 'save'}
         className={`transition-all duration-300 ${
-          interactions.isSaved 
-            ? 'bg-blue-500 text-white shadow-lg' 
+          interactions.isSaved
+            ? 'bg-blue-500 text-white shadow-lg'
             : 'hover:bg-blue-50 hover:border-blue-300'
         }`}
-        title={user ? (interactions.isSaved ? t('저장됨', 'Saved') : t('저장하기', 'Save')) : t('로그인 필요', 'Login required')}
+        title={interactions.isSaved ? t('저장됨', 'Saved') : t('저장하기', 'Save')}
       >
-        <Bookmark className={`h-4 w-4 ${size === 'sm' ? 'mr-1' : 'mr-2'} ${
-          interactions.isSaved ? 'fill-current' : ''
-        }`} />
-        {size !== 'sm' && (
-          <span>
-            {interactions.isSaved ? t('저장됨', 'Saved') : t('저장', 'Save')}
-            {showCounts && interactions.savedCount > 0 && ` (${interactions.savedCount})`}
-          </span>
+        {actionLoading === 'save' ? (
+          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+        ) : (
+          <Bookmark
+            className={`h-4 w-4 ${size === 'sm' ? 'mr-1' : 'mr-2'} ${
+              interactions.isSaved ? 'fill-current' : ''
+            }`}
+          />
         )}
+        {size !== 'sm' &&
+          (interactions.isSaved ? t('저장됨', 'Saved') : t('저장하기', 'Save'))}
       </ColorfulButton>
 
       {/* Heart Button */}
-      <ColorfulButton
-        variant={interactions.isHearted ? 'secondary' : 'outline'}
-        size={buttonSize}
-        onClick={toggleHeart}
-        disabled={!user}
-        className={`transition-all duration-300 ${
-          interactions.isHearted 
-            ? 'bg-red-500 text-white shadow-lg animate-pulse' 
-            : 'hover:bg-red-50 hover:border-red-300'
-        }`}
-        title={user ? (interactions.isHearted ? t('관심있음', 'Interested') : t('관심표시', 'Show Interest')) : t('로그인 필요', 'Login required')}
-      >
-        <Heart className={`h-4 w-4 ${size === 'sm' ? 'mr-1' : 'mr-2'} ${
-          interactions.isHearted ? 'fill-current' : ''
-        }`} />
-        {size !== 'sm' && (
-          <span>
-            {interactions.isHearted ? t('관심있음', 'Interested') : t('관심', 'Interest')}
-            {showCounts && interactions.heartsCount > 0 && ` (${interactions.heartsCount})`}
-          </span>
-        )}
-      </ColorfulButton>
+<ColorfulButton
+  variant={interactions.isHearted ? 'primary' : 'outline'} // ✅ no "danger"
+  size={buttonSize}
+  onClick={handleHeart}
+  disabled={actionLoading === 'heart'}
+  className={`transition-all duration-300 ${
+    interactions.isHearted
+      ? 'bg-red-500 text-white shadow-lg'   // ✅ custom red style
+      : 'hover:bg-red-50 hover:border-red-300'
+  }`}
+  title={interactions.isHearted ? t('좋아요됨', 'Liked') : t('좋아요', 'Like')}
+>
+  {actionLoading === 'heart' ? (
+    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+  ) : (
+    <Heart
+      className={`h-4 w-4 ${size === 'sm' ? 'mr-1' : 'mr-2'} ${
+        interactions.isHearted ? 'fill-current' : ''
+      }`}
+    />
+  )}
+  {size !== 'sm' &&
+    (interactions.isHearted ? t('좋아요됨', 'Liked') : t('좋아요', 'Like'))}
+</ColorfulButton>
+
 
       {/* Share Button */}
       <div className="relative">
@@ -144,61 +180,42 @@ export const ClubInteractionButtons: React.FC<ClubInteractionButtonsProps> = ({
           variant="outline"
           size={buttonSize}
           onClick={() => setShowShareMenu(!showShareMenu)}
-          className="hover:bg-green-50 hover:border-green-300 transition-all duration-300"
           title={t('공유하기', 'Share')}
         >
-          <Share2 className={`h-4 w-4 ${size === 'sm' ? 'mr-1' : 'mr-2'}`} />
-          {size !== 'sm' && (
-            <span>
-              {t('공유', 'Share')}
-              {showCounts && interactions.sharesCount > 0 && ` (${interactions.sharesCount})`}
-            </span>
-          )}
+          <Share2 className={`h-4 w-4 ${size === 'sm' ? '' : 'mr-2'}`} />
+          {size !== 'sm' && t('공유하기', 'Share')}
         </ColorfulButton>
 
-        {/* Share Menu */}
         {showShareMenu && (
-          <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 min-w-48">
+          <div className="absolute top-full mt-2 flex flex-col bg-white shadow-lg rounded-lg p-2 space-y-1">
             <button
               onClick={() => handleShare('link')}
-              className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors"
+              className="flex items-center px-2 py-1 hover:bg-gray-100 rounded"
             >
               {copySuccess ? (
-                <Check className="h-4 w-4 text-green-600" />
+                <Check className="h-4 w-4 mr-2 text-green-500" />
               ) : (
-                <Copy className="h-4 w-4 text-gray-600" />
+                <Copy className="h-4 w-4 mr-2" />
               )}
-              <span className={copySuccess ? 'text-green-600' : 'text-gray-700'}>
-                {copySuccess ? t('링크 복사됨!', 'Link copied!') : t('링크 복사', 'Copy link')}
-              </span>
+              {copySuccess ? t('복사됨', 'Copied!') : t('링크 복사', 'Copy link')}
             </button>
-            
             <button
               onClick={() => handleShare('email')}
-              className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors"
+              className="flex items-center px-2 py-1 hover:bg-gray-100 rounded"
             >
-              <Mail className="h-4 w-4 text-gray-600" />
-              <span className="text-gray-700">{t('이메일로 공유', 'Share via email')}</span>
+              <Mail className="h-4 w-4 mr-2" />
+              {t('이메일', 'Email')}
             </button>
-            
             <button
               onClick={() => handleShare('social')}
-              className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors"
+              className="flex items-center px-2 py-1 hover:bg-gray-100 rounded"
             >
-              <MessageSquare className="h-4 w-4 text-gray-600" />
-              <span className="text-gray-700">{t('소셜 미디어', 'Social media')}</span>
+              <MessageSquare className="h-4 w-4 mr-2" />
+              {t('소셜 공유', 'Share socially')}
             </button>
           </div>
         )}
       </div>
-
-      {/* Click outside to close share menu */}
-      {showShareMenu && (
-        <div 
-          className="fixed inset-0 z-40" 
-          onClick={() => setShowShareMenu(false)}
-        />
-      )}
     </div>
   );
 };

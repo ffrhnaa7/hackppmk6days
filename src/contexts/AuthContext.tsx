@@ -22,6 +22,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session:', session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -31,6 +32,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth state changed:', _event, session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -40,6 +42,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const signUp = async (email: string, password: string, userData?: any) => {
+    console.log('Signing up user:', email);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -57,17 +60,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         university: userData?.university || '',
         created_at: new Date().toISOString()
       });
+      console.log('User profile created');
     }
 
     return { error };
   };
 
   const signIn = async (email: string, password: string) => {
-    return await supabase.auth.signInWithPassword({ email, password });
+    console.log('Signing in user:', email);
+    const result = await supabase.auth.signInWithPassword({ email, password });
+    if (result.data.user) {
+      console.log('User signed in successfully:', result.data.user.id);
+    }
+    return result;
   };
 
   const signOut = async () => {
-    return await supabase.auth.signOut();
+    console.log('Signing out user');
+    const result = await supabase.auth.signOut();
+    console.log('User signed out');
+    return result;
   };
 
   const updateProfile = async (updates: any) => {

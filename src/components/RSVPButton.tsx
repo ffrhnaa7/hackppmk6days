@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Check, Clock, X, Users, Loader2 } from 'lucide-react';
-import { ColorfulButton } from './ColorfulButton';
 import { useRSVP } from '../hooks/useRSVP';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -23,24 +22,34 @@ export const RSVPButton: React.FC<RSVPButtonProps> = ({
   const { status, attendingCount, maybeCount, totalCount, isLoading, updateRSVP, removeRSVP } = useRSVP(eventId);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const handleRSVP = async (newStatus: 'attending' | 'maybe' | 'not_attending') => {
+  const handleRSVP = async (e: React.MouseEvent, newStatus: 'attending' | 'maybe' | 'not_attending') => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('RSVP button clicked:', newStatus, 'user:', user?.id);
+    
     if (!user) {
-      // TODO: Show login modal or redirect to login
       alert(t('로그인이 필요합니다', 'Please log in to RSVP'));
       return;
     }
 
     setActionLoading(true);
     
-    if (status === newStatus) {
-      // If clicking the same status, remove RSVP
-      await removeRSVP();
-    } else {
-      // Update to new status
-      await updateRSVP(newStatus);
+    try {
+      if (status === newStatus) {
+        // If clicking the same status, remove RSVP
+        await removeRSVP();
+        console.log('RSVP removed');
+      } else {
+        // Update to new status
+        await updateRSVP(newStatus);
+        console.log('RSVP updated to:', newStatus);
+      }
+    } catch (error) {
+      console.error('Error in handleRSVP:', error);
+    } finally {
+      setActionLoading(false);
     }
-    
-    setActionLoading(false);
   };
 
   const getStatusIcon = (statusType: 'attending' | 'maybe' | 'not_attending') => {
@@ -61,12 +70,19 @@ export const RSVPButton: React.FC<RSVPButtonProps> = ({
     return t(texts[statusType].ko, texts[statusType].en);
   };
 
-  const getStatusVariant = (statusType: 'attending' | 'maybe' | 'not_attending') => {
-    if (status === statusType) {
-      return statusType === 'attending' ? 'success' : 
-             statusType === 'maybe' ? 'secondary' : 'outline';
+  const getButtonClass = (statusType: 'attending' | 'maybe' | 'not_attending') => {
+    const isActive = status === statusType;
+    const baseClass = "inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 cursor-pointer";
+    
+    if (isActive) {
+      return `${baseClass} ${
+        statusType === 'attending' ? 'bg-mint-500 text-white shadow-lg hover:bg-mint-600' :
+        statusType === 'maybe' ? 'bg-ocean-500 text-white shadow-lg hover:bg-ocean-600' :
+        'bg-gray-500 text-white shadow-lg hover:bg-gray-600'
+      }`;
     }
-    return 'outline';
+    
+    return `${baseClass} bg-white border border-gray-300 text-gray-700 hover:bg-gray-50`;
   };
 
   if (isLoading) {
@@ -84,50 +100,44 @@ export const RSVPButton: React.FC<RSVPButtonProps> = ({
     <div className={`space-y-3 ${className}`}>
       {/* RSVP Buttons */}
       <div className="flex flex-wrap gap-2">
-        <ColorfulButton
-          variant={getStatusVariant('attending')}
-          size={size}
-          onClick={() => handleRSVP('attending')}
+        <button
+          onClick={(e) => handleRSVP(e, 'attending')}
           disabled={actionLoading}
-          className="flex items-center space-x-2"
+          className={`${getButtonClass('attending')} ${actionLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           {actionLoading && status !== 'attending' ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
           ) : (
             getStatusIcon('attending')
           )}
-          <span>{getStatusText('attending')}</span>
-        </ColorfulButton>
+          <span className="ml-2">{getStatusText('attending')}</span>
+        </button>
 
-        <ColorfulButton
-          variant={getStatusVariant('maybe')}
-          size={size}
-          onClick={() => handleRSVP('maybe')}
+        <button
+          onClick={(e) => handleRSVP(e, 'maybe')}
           disabled={actionLoading}
-          className="flex items-center space-x-2"
+          className={`${getButtonClass('maybe')} ${actionLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           {actionLoading && status !== 'maybe' ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
           ) : (
             getStatusIcon('maybe')
           )}
-          <span>{getStatusText('maybe')}</span>
-        </ColorfulButton>
+          <span className="ml-2">{getStatusText('maybe')}</span>
+        </button>
 
-        <ColorfulButton
-          variant={getStatusVariant('not_attending')}
-          size={size}
-          onClick={() => handleRSVP('not_attending')}
+        <button
+          onClick={(e) => handleRSVP(e, 'not_attending')}
           disabled={actionLoading}
-          className="flex items-center space-x-2"
+          className={`${getButtonClass('not_attending')} ${actionLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           {actionLoading && status !== 'not_attending' ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
           ) : (
             getStatusIcon('not_attending')
           )}
-          <span>{getStatusText('not_attending')}</span>
-        </ColorfulButton>
+          <span className="ml-2">{getStatusText('not_attending')}</span>
+        </button>
       </div>
 
       {/* RSVP Counts */}
