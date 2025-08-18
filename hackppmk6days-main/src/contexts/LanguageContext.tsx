@@ -5,6 +5,7 @@ type Language = 'ko' | 'en';
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
+  toggleLanguage: () => void;
   t: (ko: string, en: string) => string;
 }
 
@@ -13,12 +14,16 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState<Language>('ko');
 
+  const toggleLanguage = () => {
+    setLanguage(prev => prev === 'ko' ? 'en' : 'ko');
+  };
+
   const t = (ko: string, en: string) => {
     return language === 'ko' ? ko : en;
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, toggleLanguage, t }}>
       {children}
     </LanguageContext.Provider>
   );
