@@ -12,7 +12,9 @@ export const gamificationFeatures = [
       en: 'Earned after attending 10 international exchange events. Includes 3,000 KRW CU convenience store gifticon!'
     },
     category: 'cultural',
-    reward: 'CU 3,000원 기프티콘'
+    reward: 'CU 3,000원 기프티콘',
+    icon: '🌉',
+    points: 100
   },
   {
     id: 2,
@@ -25,7 +27,9 @@ export const gamificationFeatures = [
       en: '7-day consecutive language exchange participation earns 1,000 Naver Pay points'
     },
     category: 'language',
-    reward: '네이버페이 1,000P'
+    reward: '네이버페이 1,000P',
+    icon: '🗣️',
+    points: 75
   },
   {
     id: 3,
@@ -38,7 +42,9 @@ export const gamificationFeatures = [
       en: 'Top 10 monthly volunteers receive Starbucks Americano gifticons'
     },
     category: 'volunteer',
-    reward: '스타벅스 기프티콘'
+    reward: '스타벅스 기프티콘',
+    icon: '☕',
+    points: 150
   },
   {
     id: 4,
@@ -51,7 +57,9 @@ export const gamificationFeatures = [
       en: 'Attend 5 traditional Korean culture events to receive Korea Cultural Heritage Foundation merchandise'
     },
     category: 'cultural',
-    reward: '문화재단 굿즈'
+    reward: '문화재단 굿즈',
+    icon: '🎭',
+    points: 120
   },
   {
     id: 5,
@@ -64,7 +72,9 @@ export const gamificationFeatures = [
       en: 'Make friends from 5+ countries to earn 10,000 KRW Olive Young gifticon'
     },
     category: 'social',
-    reward: '올리브영 10,000원'
+    reward: '올리브영 10,000원',
+    icon: '🌍',
+    points: 200
   },
   {
     id: 6,
@@ -77,7 +87,9 @@ export const gamificationFeatures = [
       en: 'Attend 3+ academic events monthly for 15,000 KRW Kyobo Bookstore coupon'
     },
     category: 'academic',
-    reward: '교보문고 15,000원'
+    reward: '교보문고 15,000원',
+    icon: '📚',
+    points: 180
   },
   {
     id: 7,
@@ -90,7 +102,9 @@ export const gamificationFeatures = [
       en: 'Join 3 MT events to earn "MT Veteran" special badge and chicken gifticon'
     },
     category: 'social',
-    reward: '치킨 기프티콘'
+    reward: '치킨 기프티콘',
+    icon: '🏔️',
+    points: 90
   },
   {
     id: 8,
@@ -103,7 +117,9 @@ export const gamificationFeatures = [
       en: 'Attend 5 hoesik events to earn Korean workplace culture understanding badge'
     },
     category: 'cultural',
-    reward: '특별 배지'
+    reward: '특별 배지',
+    icon: '🍻',
+    points: 110
   },
   {
     id: 9,
@@ -116,7 +132,9 @@ export const gamificationFeatures = [
       en: 'Participate in Korean speech contest for foreigners to receive 2 CGV movie tickets'
     },
     category: 'language',
-    reward: 'CGV 영화표 2매'
+    reward: 'CGV 영화표 2매',
+    icon: '🎤',
+    points: 250
   },
   {
     id: 10,
@@ -129,7 +147,9 @@ export const gamificationFeatures = [
       en: 'Join international food events to earn 8,000 KRW Baedal Minjok coupon'
     },
     category: 'cultural',
-    reward: '배민 8,000원'
+    reward: '배민 8,000원',
+    icon: '🍜',
+    points: 80
   },
   {
     id: 11,
@@ -142,7 +162,9 @@ export const gamificationFeatures = [
       en: 'Complete senior-junior mentoring program for KakaoTalk emoticon package'
     },
     category: 'social',
-    reward: '카톡 이모티콘'
+    reward: '카톡 이모티콘',
+    icon: '👥',
+    points: 130
   },
   {
     id: 12,
@@ -155,7 +177,9 @@ export const gamificationFeatures = [
       en: 'Write 10 event reviews to earn Instagram story ad credits'
     },
     category: 'social',
-    reward: 'SNS 광고 크레딧'
+    reward: 'SNS 광고 크레딧',
+    icon: '📱',
+    points: 160
   },
   {
     id: 13,
@@ -168,7 +192,9 @@ export const gamificationFeatures = [
       en: '5 freshman helper activities earn mentor badge and 5,000 KRW GS25 voucher'
     },
     category: 'volunteer',
-    reward: 'GS25 5,000원'
+    reward: 'GS25 5,000원',
+    icon: '🎓',
+    points: 140
   },
   {
     id: 14,
@@ -181,7 +207,9 @@ export const gamificationFeatures = [
       en: 'Attend events in all four seasons to earn annual pass badge'
     },
     category: 'special',
-    reward: '연간 특별 혜택'
+    reward: '연간 특별 혜택',
+    icon: '🌸',
+    points: 300
   },
   {
     id: 15,
@@ -194,7 +222,9 @@ export const gamificationFeatures = [
       en: 'Join 3 inter-university events for KTX discount coupon and special badge'
     },
     category: 'special',
-    reward: 'KTX 할인쿠폰'
+    reward: 'KTX 할인쿠폰',
+    icon: '🚄',
+    points: 220
   }
 ];
 

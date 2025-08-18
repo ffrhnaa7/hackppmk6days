@@ -27,12 +27,14 @@ import {
   Check,
   AlertCircle,
   TrendingUp,
-  Zap
+  Zap,
+  Crown
 } from 'lucide-react';
 import { ColorfulCard } from '../components/ColorfulCard';
 import { ColorfulButton } from '../components/ColorfulButton';
 import { ProgressBar } from '../components/ProgressBar';
 import { ProfilePictureUpload } from '../components/ProfilePictureUpload';
+import { ClubManagementTab } from '../components/ClubManagementTab';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useGamificationProgress } from '../hooks/useGamificationProgress';
@@ -52,7 +54,7 @@ export const ProfilePage: React.FC = () => {
     claimAchievement 
   } = useGamificationProgress();
   
-  const [activeTab, setActiveTab] = useState<'profile' | 'privacy' | 'ai' | 'gamification'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'privacy' | 'ai' | 'gamification' | 'club-management'>('profile');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string>('');
@@ -561,6 +563,11 @@ export const ProfilePage: React.FC = () => {
           icon={<Trophy className="h-4 w-4" />} 
           label={t('게임화', 'Gamification')} 
         />
+        <TabButton 
+          tab="club-management" 
+          icon={<Crown className="h-4 w-4" />} 
+          label={t('클럽 관리', 'Club Management')} 
+        />
       </div>
 
       {/* Tab Content */}
@@ -998,8 +1005,8 @@ export const ProfilePage: React.FC = () => {
       )}
 
       {activeTab === 'ai' && (
-        <div className="space-y-8">
-          {/* AI Settings */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* AI Recommendation Settings */}
           <ColorfulCard>
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
@@ -1007,114 +1014,171 @@ export const ProfilePage: React.FC = () => {
                   <Sparkles className="h-5 w-5 mr-2 text-purple-600" />
                   {t('AI 추천 설정', 'AI Recommendation Settings')}
                 </h3>
-                {isEditing && (
-                  <ColorfulButton 
-                    variant="primary" 
-                    size="sm"
-                    onClick={saveProfile}
-                    disabled={isSaving}
-                  >
-                    {isSaving ? (
-                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-1"></div>
-                    ) : (
-                      <Save className="h-4 w-4 mr-1" />
-                    )}
-                    {isSaving ? t('저장 중...', 'Saving...') : t('저장', 'Save')}
-                  </ColorfulButton>
-                )}
+                <ColorfulButton 
+                  variant="primary" 
+                  size="sm"
+                  onClick={saveProfile}
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-1"></div>
+                  ) : (
+                    <Save className="h-4 w-4 mr-1" />
+                  )}
+                  {isSaving ? t('저장 중...', 'Saving...') : t('저장', 'Save')}
+                </ColorfulButton>
               </div>
 
               <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">
-                    {t('문화 다양성 선호도', 'Cultural Diversity Preference')}
-                  </label>
-                  <div className="flex space-x-2">
-                    {[
-                      { value: 'high', label: t('높음', 'High'), color: 'bg-green-500' },
-                      { value: 'medium', label: t('보통', 'Medium'), color: 'bg-yellow-500' },
-                      { value: 'low', label: t('낮음', 'Low'), color: 'bg-red-500' }
-                    ].map((option) => (
-                      <button
-                        key={option.value}
-                        onClick={() => updateNestedProfile('aiRecommendations', 'culturalDiversityPreference', option.value)}
-                        className={`px-4 py-2 rounded-lg font-semibold text-white ${option.color} ${
-                          profile.aiRecommendations?.culturalDiversityPreference === option.value 
-                            ? 'ring-2 ring-offset-2 ring-blue-500' 
-                            : ''
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
+                  <div>
+                    <h4 className="font-semibold text-gray-800">{t('AI 추천 활성화', 'Enable AI Recommendations')}</h4>
+                    <p className="text-sm text-gray-600">{t('맞춤형 이벤트 추천을 받아보세요', 'Get personalized event recommendations')}</p>
                   </div>
+                  <input 
+                    type="checkbox" 
+                    checked={profile.aiRecommendations?.enabled}
+                    onChange={(e) => updateNestedProfile('aiRecommendations', 'enabled', e.target.checked)}
+                    className="rounded text-purple-600 scale-125"
+                  />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">
-                    {t('알림 빈도', 'Notification Frequency')}
-                  </label>
-                  <select 
-                    value={profile.aiRecommendations?.notificationFrequency || 'weekly'}
-                    onChange={(e) => updateNestedProfile('aiRecommendations', 'notificationFrequency', e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="daily">{t('매일', 'Daily')}</option>
-                    <option value="weekly">{t('주간', 'Weekly')}</option>
-                    <option value="monthly">{t('월간', 'Monthly')}</option>
-                  </select>
-                </div>
+                {profile.aiRecommendations?.enabled && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        {t('문화 다양성 선호도', 'Cultural Diversity Preference')}
+                      </label>
+                      <select
+                        value={profile.aiRecommendations?.culturalDiversityPreference || 'high'}
+                        onChange={(e) => updateNestedProfile('aiRecommendations', 'culturalDiversityPreference', e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500"
+                      >
+                        <option value="low">{t('낮음', 'Low')}</option>
+                        <option value="medium">{t('보통', 'Medium')}</option>
+                        <option value="high">{t('높음', 'High')}</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        {t('관심 이벤트 유형', 'Preferred Event Types')}
+                      </label>
+                      <div className="space-y-2">
+                        {[
+                          { value: 'cultural', label: t('문화', 'Cultural') },
+                          { value: 'academic', label: t('학술', 'Academic') },
+                          { value: 'social', label: t('사교', 'Social') },
+                          { value: 'sports', label: t('스포츠', 'Sports') },
+                          { value: 'arts', label: t('예술', 'Arts') }
+                        ].map((type) => (
+                          <label key={type.value} className="flex items-center space-x-2">
+                            <input 
+                              type="checkbox" 
+                              checked={profile.aiRecommendations?.eventTypes?.includes(type.value)}
+                              onChange={(e) => {
+                                const currentTypes = profile.aiRecommendations?.eventTypes || [];
+                                const newTypes = e.target.checked 
+                                  ? [...currentTypes, type.value]
+                                  : currentTypes.filter(t => t !== type.value);
+                                updateNestedProfile('aiRecommendations', 'eventTypes', newTypes);
+                              }}
+                              className="rounded text-purple-600"
+                            />
+                            <span>{type.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        {t('최대 거리 (km)', 'Max Distance (km)')}
+                      </label>
+                      <input
+                        type="range"
+                        min="1"
+                        max="50"
+                        value={profile.aiRecommendations?.maxDistance || 10}
+                        onChange={(e) => updateNestedProfile('aiRecommendations', 'maxDistance', parseInt(e.target.value))}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-sm text-gray-600">
+                        <span>1km</span>
+                        <span className="font-semibold">{profile.aiRecommendations?.maxDistance || 10}km</span>
+                        <span>50km</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        {t('알림 빈도', 'Notification Frequency')}
+                      </label>
+                      <select
+                        value={profile.aiRecommendations?.notificationFrequency || 'weekly'}
+                        onChange={(e) => updateNestedProfile('aiRecommendations', 'notificationFrequency', e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500"
+                      >
+                        <option value="daily">{t('매일', 'Daily')}</option>
+                        <option value="weekly">{t('주간', 'Weekly')}</option>
+                        <option value="monthly">{t('월간', 'Monthly')}</option>
+                      </select>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </ColorfulCard>
 
-          {/* AI Recommendations */}
+          {/* Sample AI Recommendations */}
           <ColorfulCard>
             <div className="p-6">
               <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                <Target className="h-5 w-5 mr-2 text-blue-600" />
-                {t('맞춤 이벤트 추천', 'Personalized Event Recommendations')}
+                <Target className="h-5 w-5 mr-2 text-mint-600" />
+                {t('AI 추천 예시', 'Sample AI Recommendations')}
               </h3>
 
               <div className="space-y-4">
                 {sampleRecommendations.map((rec, index) => (
-                  <div key={index} className="border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-all">
+                  <div key={index} className="p-4 bg-gradient-to-r from-mint-50 to-blue-50 rounded-lg border border-mint-200">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center space-x-2">
-                        <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
-                          {rec.score}
+                        <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
+                          <span className="text-white font-bold text-sm">{rec.score}</span>
                         </div>
-                        <span className="font-semibold text-gray-800">
-                          {t('매치 점수', 'Match Score')}: {rec.score}%
-                        </span>
+                        <span className="text-sm font-semibold text-gray-600">{t('매칭 점수', 'Match Score')}</span>
                       </div>
-                      <ColorfulButton size="sm" variant="primary">
-                        {t('자세히 보기', 'View Details')}
-                      </ColorfulButton>
+                      <Sparkles className="h-5 w-5 text-purple-500" />
                     </div>
 
                     <div className="space-y-2">
-                      <h4 className="font-semibold text-gray-800">
-                        {t('추천 이유:', 'Why recommended:')}
-                      </h4>
-                      <ul className="space-y-1">
-                        {rec.reasons.map((reason, idx) => (
-                          <li key={idx} className="text-sm text-gray-600 flex items-center">
-                            <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                            {language === 'ko' ? reason.ko : reason.en}
-                          </li>
-                        ))}
-                      </ul>
+                      <h4 className="font-semibold text-gray-800">{t('추천 이유', 'Recommendation Reasons')}</h4>
+                      {rec.reasons.map((reason, idx) => (
+                        <div key={idx} className="flex items-center space-x-2 text-sm">
+                          <div className="w-2 h-2 bg-mint-500 rounded-full"></div>
+                          <span>{language === 'ko' ? reason.ko : reason.en}</span>
+                        </div>
+                      ))}
                     </div>
 
-                    <div className="mt-3 p-3 bg-amber-50 rounded-lg">
-                      <p className="text-sm text-amber-800">
-                        <strong>{t('문화 인사이트:', 'Cultural Insight:')}</strong>{' '}
+                    <div className="mt-3 p-3 bg-white rounded-lg">
+                      <h5 className="font-semibold text-gray-700 mb-1">{t('문화적 인사이트', 'Cultural Insight')}</h5>
+                      <p className="text-sm text-gray-600">
                         {language === 'ko' ? rec.culturalInsight.ko : rec.culturalInsight.en}
                       </p>
                     </div>
                   </div>
                 ))}
+
+                <div className="text-center py-4">
+                  <p className="text-sm text-gray-500 mb-3">
+                    {t('AI 추천을 활성화하면 더 많은 맞춤형 추천을 받을 수 있습니다', 'Enable AI recommendations to get more personalized suggestions')}
+                  </p>
+                  <ColorfulButton variant="outline" size="sm">
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    {t('더 많은 추천 보기', 'View More Recommendations')}
+                  </ColorfulButton>
+                </div>
               </div>
             </div>
           </ColorfulCard>
@@ -1122,242 +1186,168 @@ export const ProfilePage: React.FC = () => {
       )}
 
       {activeTab === 'gamification' && (
-        <div className="space-y-8">
-          {/* Stats Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <ColorfulCard className="bg-gradient-to-br from-blue-50 to-blue-100">
-              <div className="p-6 text-center">
-                <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Calendar className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold text-blue-800">{profile.streaks?.eventAttendance}</h3>
-                <p className="text-blue-600 font-semibold">{t('이벤트 연속 참석', 'Event Attendance Streak')}</p>
-              </div>
-            </ColorfulCard>
-
-            <ColorfulCard className="bg-gradient-to-br from-mint-50 to-mint-100">
-              <div className="p-6 text-center">
-                <div className="w-16 h-16 bg-mint-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Languages className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold text-mint-800">{profile.streaks?.languageExchange}</h3>
-                <p className="text-mint-600 font-semibold">{t('언어교환 연속', 'Language Exchange Streak')}</p>
-              </div>
-            </ColorfulCard>
-
-            <ColorfulCard className="bg-gradient-to-br from-purple-50 to-purple-100">
-              <div className="p-6 text-center">
-                <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Globe className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold text-purple-800">{profile.streaks?.culturalEvents}</h3>
-                <p className="text-purple-600 font-semibold">{t('문화행사 연속', 'Cultural Events Streak')}</p>
-              </div>
-            </ColorfulCard>
-          </div>
-
-          {/* Progress Tracking */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Progress Overview */}
           <ColorfulCard>
             <div className="p-6">
               <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                <TrendingUp className="h-5 w-5 mr-2 text-green-600" />
-                {t('리워드 진행 상황', 'Reward Progress')}
+                <Trophy className="h-5 w-5 mr-2 text-yellow-600" />
+                {t('진행 상황', 'Progress Overview')}
               </h3>
 
-              {progressLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-                  <span className="ml-2 text-gray-600">{t('진행 상황 로딩 중...', 'Loading progress...')}</span>
+              <div className="space-y-6">
+                {/* Level Progress */}
+                <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-semibold text-gray-800">Level {profile.level}</span>
+                    <span className="text-sm text-gray-600">{profile.points} / {(profile.level || 1) * 1000} XP</span>
+                  </div>
+                  <ProgressBar 
+                    current={profile.points || 0} 
+                    total={(profile.level || 1) * 1000} 
+                    color="orange"
+                  />
                 </div>
-              ) : (
-                <div className="space-y-6">
-                  {gamificationFeatures.map((feature) => {
-                    const userProgress = getProgressForReward(feature.id);
-                    const isAchieved = isRewardAchieved(feature.id);
-                    const targetCount = rewardTargets[feature.id] || 10;
-                    const currentCount = userProgress?.currentCount || 0;
-                    
-                    const colorMap: { [key: string]: 'blue' | 'mint' | 'purple' | 'green' | 'orange' } = {
-                      cultural: 'blue',
-                      language: 'mint',
-                      volunteer: 'green',
-                      social: 'purple',
-                      academic: 'orange',
-                      special: 'purple'
-                    };
 
-                    return (
-                      <div key={feature.id} className="border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-all">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex-1">
-                            <h4 className="font-bold text-gray-800 mb-2">
+                {/* Streaks */}
+                <div>
+                  <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
+                    <Zap className="h-4 w-4 mr-2 text-orange-500" />
+                    {t('연속 기록', 'Streaks')}
+                  </h4>
+                  <div className="grid grid-cols-1 gap-3">
+                    {[
+                      { key: 'eventAttendance', label: t('이벤트 참석', 'Event Attendance'), icon: '🎯' },
+                      { key: 'languageExchange', label: t('언어 교환', 'Language Exchange'), icon: '💬' },
+                      { key: 'culturalEvents', label: t('문화 행사', 'Cultural Events'), icon: '🎭' }
+                    ].map((streak) => (
+                      <div key={streak.key} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-lg">{streak.icon}</span>
+                          <span className="text-sm font-medium">{streak.label}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-bold text-orange-600">
+                            {profile.streaks?.[streak.key as keyof typeof profile.streaks] || 0}
+                          </span>
+                          <span className="text-xs text-gray-500">{t('일', 'days')}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Recent Achievements */}
+                <div>
+                  <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
+                    <Award className="h-4 w-4 mr-2 text-purple-500" />
+                    {t('최근 업적', 'Recent Achievements')}
+                  </h4>
+                  <div className="space-y-2">
+                    {achievements.slice(0, 3).map((achievement) => (
+                      <div key={achievement.id} className="flex items-center space-x-3 p-3 bg-purple-50 rounded-lg">
+                        <span className="text-2xl">{achievement.icon}</span>
+                        <div>
+                          <p className="font-semibold text-gray-800">
+                            {language === 'ko' ? achievement.name.ko : achievement.name.en}
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            {new Date(achievement.earned_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ColorfulCard>
+
+          {/* Rewards & Challenges */}
+          <ColorfulCard>
+            <div className="p-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                <Gift className="h-5 w-5 mr-2 text-mint-600" />
+                {t('리워드 & 도전과제', 'Rewards & Challenges')}
+              </h3>
+
+              <div className="space-y-4">
+                {gamificationFeatures.slice(0, 5).map((feature) => {
+                  const currentProgress = getProgressForReward(feature.id);
+                  const target = rewardTargets[feature.id] || 10;
+                  const isAchieved = isRewardAchieved(feature.id);
+                  const progressPercentage = Math.min((currentProgress / target) * 100, 100);
+
+                  return (
+                    <div key={feature.id} className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          <span className="text-2xl">{feature.icon}</span>
+                          <div>
+                            <h4 className="font-semibold text-gray-800">
                               {language === 'ko' ? feature.title.ko : feature.title.en}
                             </h4>
-                            <p className="text-sm text-gray-600 mb-3">
+                            <p className="text-sm text-gray-600">
                               {language === 'ko' ? feature.description.ko : feature.description.en}
                             </p>
                           </div>
-                          <div className="flex items-center space-x-2 ml-4">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                              feature.category === 'cultural' ? 'bg-blue-100 text-blue-800' :
-                              feature.category === 'language' ? 'bg-mint-100 text-mint-800' :
-                              feature.category === 'volunteer' ? 'bg-green-100 text-green-800' :
-                              feature.category === 'social' ? 'bg-purple-100 text-purple-800' :
-                              feature.category === 'academic' ? 'bg-orange-100 text-orange-800' :
-                              'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {feature.category}
-                            </span>
-                            {isAchieved && (
-                              <div className="flex items-center space-x-1">
-                                <Zap className="h-4 w-4 text-yellow-500" />
-                                <span className="text-xs font-semibold text-yellow-600">
-                                  {t('완료', 'Completed')}
-                                </span>
-                              </div>
-                            )}
-                          </div>
                         </div>
-
-                        <ProgressBar
-                          current={currentCount}
-                          target={targetCount}
-                          color={colorMap[feature.category] || 'blue'}
-                          size="lg"
-                          reward={feature.reward}
-                          isCompleted={isAchieved}
-                          className="mb-3"
-                        />
-
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">
-                            {t('진행률', 'Progress')}: {Math.min(100, Math.round((currentCount / targetCount) * 100))}%
-                          </span>
-                          <span className="text-xs font-semibold text-red-600 bg-red-50 px-2 py-1 rounded">
-                            🎁 {feature.reward}
-                          </span>
-                        </div>
-
-                        {isAchieved && (
-                          <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
-                                <Check className="h-5 w-5 text-green-600" />
-                                <span className="text-green-800 font-semibold">
-                                  {t('목표 달성! 리워드를 받을 수 있습니다.', 'Goal achieved! You can claim your reward.')}
-                                </span>
-                              </div>
-                              <ColorfulButton
-                                variant="primary"
-                                size="sm"
-                                onClick={() => {
-                                  // In a real app, this would claim the reward
-                                  setSaveMessage(t('리워드가 수령되었습니다!', 'Reward claimed!'));
-                                  setTimeout(() => setSaveMessage(''), 3000);
-                                }}
-                              >
-                                <Gift className="h-4 w-4 mr-1" />
-                                {t('수령', 'Claim')}
-                              </ColorfulButton>
-                            </div>
+                        {isAchieved ? (
+                          <div className="flex items-center space-x-1 text-green-600">
+                            <Check className="h-4 w-4" />
+                            <span className="text-xs font-semibold">{t('완료', 'Complete')}</span>
                           </div>
+                        ) : (
+                          <ColorfulButton
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleClaimAchievement(feature.id.toString())}
+                            disabled={progressPercentage < 100}
+                          >
+                            {progressPercentage >= 100 ? t('수령', 'Claim') : t('진행중', 'In Progress')}
+                          </ColorfulButton>
                         )}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </ColorfulCard>
 
-          {/* Badges */}
-          <ColorfulCard>
-            <div className="p-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                <Award className="h-5 w-5 mr-2 text-yellow-600" />
-                {t('획득한 배지', 'Earned Badges')}
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {profile.badges?.map((badge) => (
-                  <div key={badge.id} className="border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-all">
-                    <div className="text-center">
-                      <div className="text-4xl mb-2">{badge.icon}</div>
-                      <h4 className="font-bold text-gray-800">
-                        {language === 'ko' ? badge.name.ko : badge.name.en}
-                      </h4>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {language === 'ko' ? badge.description.ko : badge.description.en}
-                      </p>
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold mt-2 ${
-                        badge.rarity === 'legendary' ? 'bg-yellow-100 text-yellow-800' :
-                        badge.rarity === 'epic' ? 'bg-purple-100 text-purple-800' :
-                        badge.rarity === 'rare' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {badge.rarity}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </ColorfulCard>
-
-          {/* Completed Achievements */}
-          {achievements.length > 0 && (
-            <ColorfulCard>
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                  <Trophy className="h-5 w-5 mr-2 text-gold-600" />
-                  {t('완료된 성취', 'Completed Achievements')}
-                </h3>
-
-                <div className="space-y-4">
-                  {achievements.map((achievement) => (
-                    <div key={achievement.id} className="border border-green-200 rounded-xl p-4 bg-green-50">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-bold text-green-800">
-                            {language === 'ko' ? achievement.rewardTitle.ko : achievement.rewardTitle.en}
-                          </h4>
-                          <p className="text-sm text-green-600 mt-1">
-                            {language === 'ko' ? achievement.rewardDescription.ko : achievement.rewardDescription.en}
-                          </p>
-                          <div className="flex items-center space-x-2 mt-2">
-                            <span className="text-xs text-green-600">
-                              {t('완료일', 'Completed')}: {new Date(achievement.completedAt).toLocaleDateString()}
-                            </span>
-                            <span className="text-xs font-semibold text-red-600 bg-red-100 px-2 py-1 rounded">
-                              🎁 {achievement.rewardPrize}
-                            </span>
-                          </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">{t('진행률', 'Progress')}</span>
+                          <span className="font-semibold">{currentProgress} / {target}</span>
                         </div>
-                        <div className="ml-4">
-                          {achievement.claimed ? (
-                            <div className="flex items-center space-x-1 text-green-600">
-                              <Check className="h-4 w-4" />
-                              <span className="text-sm font-semibold">{t('수령완료', 'Claimed')}</span>
-                            </div>
-                          ) : (
-                            <ColorfulButton
-                              variant="primary"
-                              size="sm"
-                              onClick={() => handleClaimAchievement(achievement.id)}
-                            >
-                              <Gift className="h-4 w-4 mr-1" />
-                              {t('수령', 'Claim')}
-                            </ColorfulButton>
-                          )}
+                        <ProgressBar 
+                          current={currentProgress} 
+                          total={target} 
+                          color={isAchieved ? 'green' : 'mint'}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between mt-3 text-sm">
+                        <div className="flex items-center space-x-2 text-yellow-600">
+                          <Star className="h-4 w-4" />
+                          <span>{feature.points} {t('포인트', 'points')}</span>
                         </div>
+                        <span className="text-gray-500">
+                          {Math.round(progressPercentage)}% {t('완료', 'complete')}
+                        </span>
                       </div>
                     </div>
-                  ))}
+                  );
+                })}
+
+                <div className="text-center py-4">
+                  <ColorfulButton variant="outline">
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                    {t('모든 도전과제 보기', 'View All Challenges')}
+                  </ColorfulButton>
                 </div>
               </div>
-            </ColorfulCard>
-          )}
+            </div>
+          </ColorfulCard>
         </div>
+      )}
+
+      {activeTab === 'club-management' && (
+        <ClubManagementTab />
       )}
     </div>
   );

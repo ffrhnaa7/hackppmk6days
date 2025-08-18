@@ -23,6 +23,9 @@ export interface UserAchievement {
   completedAt: string;
   claimed: boolean;
   claimedAt?: string;
+  icon: string;
+  name: { ko: string; en: string };
+  earned_at: string;
 }
 
 export const useGamificationProgress = () => {
@@ -83,7 +86,10 @@ export const useGamificationProgress = () => {
         rewardPrize: item.reward_prize,
         completedAt: item.completed_at,
         claimed: item.claimed,
-        claimedAt: item.claimed_at
+        claimedAt: item.claimed_at,
+        icon: item.icon || '🏆',
+        name: item.reward_title,
+        earned_at: item.completed_at
       }));
 
       setProgress(transformedProgress);
@@ -153,8 +159,9 @@ export const useGamificationProgress = () => {
   };
 
   // Get progress for a specific reward
-  const getProgressForReward = (rewardId: number): UserProgress | null => {
-    return progress.find(p => p.rewardId === rewardId) || null;
+  const getProgressForReward = (rewardId: number): number => {
+    const progressItem = progress.find(p => p.rewardId === rewardId);
+    return progressItem ? progressItem.currentCount : 0;
   };
 
   // Check if reward is achieved
