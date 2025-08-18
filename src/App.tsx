@@ -4,11 +4,14 @@ import { AuthProvider } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { Navbar } from './components/Navbar';
 import { HomePage } from './pages/HomePage';
+import { ClubsPage } from './pages/ClubsPage';
+import { ClubDetailPage } from './pages/ClubDetailPage';
+import { EventsPage } from './pages/EventsPage';
+import { EventDetailPage } from './pages/EventDetailPage';
 import { ProfilePage } from './pages/ProfilePage';
-import { EventPage } from './pages/EventPage';
-import { ExplorePage } from './pages/ExplorePage';
-import { ClubHubPage } from './pages/ClubHubPage';
+import { MyApplicationsPage } from './pages/MyApplicationsPage';
 import { SavedClubsPage } from './pages/SavedClubsPage';
+import { LikedClubsPage } from './pages/LikedClubsPage';
 import { AuthPage } from './pages/AuthPage';
 
 function App() {
@@ -16,16 +19,19 @@ function App() {
     <AuthProvider>
       <LanguageProvider>
         <Router>
-          <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-mint-50">
+          <div className="min-h-screen bg-gray-50">
             <Navbar />
             <main>
               <Routes>
                 <Route path="/" element={<HomePage />} />
+                <Route path="/clubs" element={<ClubsPage />} />
+                <Route path="/club/:id" element={<ClubDetailPage />} />
+                <Route path="/events" element={<EventsPage />} />
+                <Route path="/event/:id" element={<EventDetailPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/event/:id" element={<EventPage />} />
-                <Route path="/explore" element={<ExplorePage />} />
-                <Route path="/clubs" element={<ClubHubPage />} />
+                <Route path="/my-applications" element={<MyApplicationsPage />} />
                 <Route path="/saved-clubs" element={<SavedClubsPage />} />
+                <Route path="/liked-clubs" element={<LikedClubsPage />} />
                 <Route path="/auth" element={<AuthPage />} />
               </Routes>
             </main>

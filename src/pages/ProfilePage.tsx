@@ -32,6 +32,7 @@ import {
 import { ColorfulCard } from '../components/ColorfulCard';
 import { ColorfulButton } from '../components/ColorfulButton';
 import { ProgressBar } from '../components/ProgressBar';
+import { ProfilePictureUpload } from '../components/ProfilePictureUpload';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useGamificationProgress } from '../hooks/useGamificationProgress';
@@ -100,6 +101,10 @@ export const ProfilePage: React.FC = () => {
       notificationFrequency: 'weekly'
     }
   });
+
+  // Profile picture state
+  const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null);
+  const [profilePicturePath, setProfilePicturePath] = useState<string | null>(null);
 
   // Load profile data on component mount
   useEffect(() => {
@@ -170,6 +175,10 @@ export const ProfilePage: React.FC = () => {
             notificationFrequency: 'weekly'
           }
         }));
+
+        // Set profile picture data
+        setProfilePictureUrl(data.profile_picture_url || null);
+        setProfilePicturePath(data.profile_picture_path || null);
       } else {
         // No profile exists, set email from auth user
         setProfile(prev => ({
@@ -237,7 +246,9 @@ export const ProfilePage: React.FC = () => {
           eventTypes: ['cultural', 'academic', 'social'],
           maxDistance: 10,
           notificationFrequency: 'weekly'
-        }
+        },
+        profile_picture_url: profilePictureUrl,
+        profile_picture_path: profilePicturePath
       };
 
       console.log('Formatted profile data:', profileData);
@@ -331,6 +342,32 @@ export const ProfilePage: React.FC = () => {
       ...prev,
       interests: prev.interests?.filter(i => i !== interest) || []
     }));
+  };
+
+  const handleProfilePictureUpdate = (url: string | null, path: string | null) => {
+    setProfilePictureUrl(url);
+    setProfilePicturePath(path);
+    
+    // Auto-save profile picture changes
+    if (user) {
+      supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          profile_picture_url: url,
+          profile_picture_path: path,
+          updated_at: new Date().toISOString()
+        })
+        .then(({ error }) => {
+          if (error) {
+            console.error('Error saving profile picture:', error);
+            setSaveError('Error saving profile picture');
+          } else {
+            setSaveMessage(t('프로필 사진이 업데이트되었습니다!', 'Profile picture updated!'));
+            setTimeout(() => setSaveMessage(''), 3000);
+          }
+        });
+    }
   };
 
   const handleClaimAchievement = async (achievementId: string) => {
@@ -457,15 +494,18 @@ export const ProfilePage: React.FC = () => {
       <ColorfulCard className="mb-8 bg-gradient-to-r from-blue-50 to-mint-50">
         <div className="p-6">
           <div className="flex items-start justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <div className="w-20 h-20 bg-gradient-primary rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                  {profile.name?.charAt(0) || 'U'}
-                </div>
-                <button className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-lg hover:shadow-xl transition-all">
-                  <Camera className="h-4 w-4 text-gray-600" />
-                </button>
+            <div className="flex items-center space-x-6">
+              {/* Profile Picture */}
+              <div className="flex-shrink-0">
+                <ProfilePictureUpload
+                  currentImageUrl={profilePictureUrl}
+                  currentImagePath={profilePicturePath}
+                  onImageUpdate={handleProfilePictureUpdate}
+                  size="lg"
+                />
               </div>
+              
+              {/* Profile Info */}
               <div>
                 <h2 className="text-2xl font-bold text-gray-800">{profile.name || t('이름 없음', 'No Name')}</h2>
                 <p className="text-blue-600 font-semibold">{profile.university || t('대학교 미설정', 'University not set')}</p>

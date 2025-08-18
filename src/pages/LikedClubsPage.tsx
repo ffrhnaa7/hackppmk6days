@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bookmark, Heart, Users, Calendar, Search, Filter } from 'lucide-react';
+import { Heart, Sparkles, Users, Calendar, Search, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ColorfulCard } from '../components/ColorfulCard';
 import { ColorfulButton } from '../components/ColorfulButton';
@@ -10,48 +10,48 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { koreanClubs } from '../data/koreanClubs';
 
-interface SavedClub {
+interface LikedClub {
   id: string;
   club_id: string;
   created_at: string;
 }
 
-export const SavedClubsPage: React.FC = () => {
+export const LikedClubsPage: React.FC = () => {
   const { user } = useAuth();
   const { language, t } = useLanguage();
-  const [savedClubs, setSavedClubs] = useState<SavedClub[]>([]);
+  const [likedClubs, setLikedClubs] = useState<LikedClub[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (user) {
-      loadSavedClubs();
+      loadLikedClubs();
     }
   }, [user]);
 
-  const loadSavedClubs = async () => {
+  const loadLikedClubs = async () => {
     if (!user) return;
 
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('saved_clubs')
+        .from('club_hearts')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setSavedClubs(data || []);
+      setLikedClubs(data || []);
     } catch (error) {
-      console.error('Error loading saved clubs:', error);
+      console.error('Error loading liked clubs:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Get club details from saved club IDs
-  const savedClubDetails = savedClubs
-    .map(saved => koreanClubs.find(club => club.id === saved.club_id))
+  // Get club details from liked club IDs
+  const likedClubDetails = likedClubs
+    .map(liked => koreanClubs.find(club => club.id === liked.club_id))
     .filter(Boolean)
     .filter(club => {
       if (!searchTerm) return true;
@@ -59,16 +59,47 @@ export const SavedClubsPage: React.FC = () => {
       return clubName.toLowerCase().includes(searchTerm.toLowerCase());
     });
 
+  // Get categories from liked clubs for AI insights
+  const getPreferredCategories = () => {
+    const categories: { [key: string]: number } = {};
+    likedClubDetails.forEach(club => {
+      if (club) {
+        // Use the single category property instead of categories array
+        const categoryName = language === 'ko' ? 
+          (club.category === '학술' ? '학술' :
+           club.category === '문화' ? '문화' :
+           club.category === '취미' ? '취미' :
+           club.category === '봉사' ? '봉사' :
+           club.category === '종교' ? '종교' :
+           club.category === '체육' ? '체육' :
+           club.category === '학생회' ? '학생회' : club.category) :
+          (club.category === '학술' ? 'Academic' :
+           club.category === '문화' ? 'Cultural' :
+           club.category === '취미' ? 'Hobby' :
+           club.category === '봉사' ? 'Volunteer' :
+           club.category === '종교' ? 'Religious' :
+           club.category === '체육' ? 'Sports' :
+           club.category === '학생회' ? 'Student Association' : club.category);
+        categories[categoryName] = (categories[categoryName] || 0) + 1;
+      }
+    });
+    return Object.entries(categories)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 3);
+  };
+
+  const preferredCategories = getPreferredCategories();
+
   if (!user) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <ColorfulCard className="text-center p-8">
-          <Bookmark className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <Heart className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">
             {t('로그인이 필요합니다', 'Login Required')}
           </h2>
           <p className="text-gray-600 mb-4">
-            {t('저장된 동아리를 보려면 로그인하세요', 'Please login to view your saved clubs')}
+            {t('좋아요한 동아리를 보려면 로그인하세요', 'Please login to view your liked clubs')}
           </p>
           <Link to="/auth">
             <ColorfulButton>
@@ -85,18 +116,81 @@ export const SavedClubsPage: React.FC = () => {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
-          {t('저장된 동아리', 'Saved Clubs')}
+          {t('좋아요한 동아리', 'Liked Clubs')}
         </h1>
         <p className="text-gray-600">
-          {t('관심있는 동아리들을 모아보세요', 'View all your saved clubs in one place')}
+          {t('좋아요한 동아리를 기반으로 AI가 맞춤 추천을 제공합니다', 'AI provides personalized recommendations based on your liked clubs')}
         </p>
       </div>
+
+      {/* AI Insights Card */}
+      {likedClubDetails.length > 0 && (
+        <ColorfulCard className="mb-6 bg-gradient-to-r from-purple-50 to-pink-50">
+          <div className="p-6">
+            <div className="flex items-center mb-4">
+              <Sparkles className="h-6 w-6 text-purple-600 mr-2" />
+              <h3 className="text-xl font-bold text-gray-800">
+                {t('AI 인사이트', 'AI Insights')}
+              </h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
+                  <TrendingUp className="h-4 w-4 mr-1" />
+                  {t('선호 카테고리', 'Preferred Categories')}
+                </h4>
+                <div className="space-y-2">
+                  {preferredCategories.map(([category, count], index) => (
+                    <div key={category} className="flex items-center justify-between">
+                      <span className="text-sm text-gray-700">{category}</span>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-16 bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-purple-500 h-2 rounded-full" 
+                            style={{ width: `${(count / likedClubDetails.length) * 100}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-xs text-gray-500">{count}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-white rounded-lg p-4">
+                <h4 className="font-semibold text-gray-800 mb-2">
+                  {t('추천 알고리즘 상태', 'Recommendation Algorithm Status')}
+                </h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span>{t('데이터 수집', 'Data Collection')}</span>
+                    <span className="text-green-600 font-semibold">
+                      {likedClubDetails.length >= 3 ? t('충분', 'Sufficient') : t('더 필요', 'Need More')}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>{t('추천 정확도', 'Recommendation Accuracy')}</span>
+                    <span className="text-blue-600 font-semibold">
+                      {likedClubDetails.length >= 5 ? t('높음', 'High') : 
+                       likedClubDetails.length >= 3 ? t('보통', 'Medium') : t('낮음', 'Low')}
+                    </span>
+                  </div>
+                </div>
+                {likedClubDetails.length < 3 && (
+                  <p className="text-xs text-amber-600 mt-2">
+                    {t('더 정확한 추천을 위해 3개 이상의 동아리에 좋아요를 눌러주세요', 'Like 3+ clubs for more accurate recommendations')}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </ColorfulCard>
+      )}
 
       {/* Search */}
       <ColorfulCard className="mb-6">
         <div className="p-6">
           <ColorfulInput
-            placeholder={t('저장된 동아리 검색...', 'Search saved clubs...')}
+            placeholder={t('좋아요한 동아리 검색...', 'Search liked clubs...')}
             icon={<Search className="h-5 w-5" />}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -121,19 +215,19 @@ export const SavedClubsPage: React.FC = () => {
       )}
 
       {/* Empty State */}
-      {!loading && savedClubDetails.length === 0 && (
+      {!loading && likedClubDetails.length === 0 && (
         <ColorfulCard className="text-center p-12">
-          <Bookmark className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <Heart className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">
             {searchTerm 
               ? t('검색 결과가 없습니다', 'No search results')
-              : t('저장된 동아리가 없습니다', 'No saved clubs yet')
+              : t('아직 좋아요한 동아리가 없습니다', 'No liked clubs yet')
             }
           </h2>
           <p className="text-gray-600 mb-6">
             {searchTerm
               ? t('다른 검색어를 시도해보세요', 'Try a different search term')
-              : t('동아리 허브에서 관심있는 동아리를 저장해보세요', 'Start saving clubs from the Club Hub')
+              : t('동아리에 좋아요를 눌러 AI 추천 시스템을 활성화하세요', 'Start liking clubs to activate the AI recommendation system')
             }
           </p>
           {!searchTerm && (
@@ -146,21 +240,40 @@ export const SavedClubsPage: React.FC = () => {
         </ColorfulCard>
       )}
 
-      {/* Saved Clubs Grid */}
-      {!loading && savedClubDetails.length > 0 && (
+      {/* Liked Clubs Grid */}
+      {!loading && likedClubDetails.length > 0 && (
         <>
           <div className="mb-4 flex items-center justify-between">
             <p className="text-gray-600">
-              {t(`${savedClubDetails.length}개의 저장된 동아리`, `${savedClubDetails.length} saved clubs`)}
+              {t(`${likedClubDetails.length}개의 좋아요한 동아리`, `${likedClubDetails.length} liked clubs`)}
             </p>
+            <div className="flex items-center space-x-2 text-sm text-purple-600">
+              <Sparkles className="h-4 w-4" />
+              <span>{t('AI 추천 데이터로 활용됩니다', 'Used for AI recommendations')}</span>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {savedClubDetails.map((club) => {
+            {likedClubDetails.map((club) => {
               if (!club) return null;
               
               const clubName = language === 'ko' ? club.name.ko : club.name.en;
               const clubDescription = language === 'ko' ? club.description.ko : club.description.en;
+              const categoryName = language === 'ko' ? 
+                (club.category === '학술' ? '학술' :
+                 club.category === '문화' ? '문화' :
+                 club.category === '취미' ? '취미' :
+                 club.category === '봉사' ? '봉사' :
+                 club.category === '종교' ? '종교' :
+                 club.category === '체육' ? '체육' :
+                 club.category === '학생회' ? '학생회' : club.category) :
+                (club.category === '학술' ? 'Academic' :
+                 club.category === '문화' ? 'Cultural' :
+                 club.category === '취미' ? 'Hobby' :
+                 club.category === '봉사' ? 'Volunteer' :
+                 club.category === '종교' ? 'Religious' :
+                 club.category === '체육' ? 'Sports' :
+                 club.category === '학생회' ? 'Student Association' : club.category);
 
               return (
                 <ColorfulCard key={club.id} className="overflow-hidden hover:shadow-xl transition-all duration-300">
@@ -181,11 +294,11 @@ export const SavedClubsPage: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Saved Badge */}
+                    {/* Liked Badge */}
                     <div className="absolute top-3 right-3">
-                      <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center">
-                        <Bookmark className="h-3 w-3 mr-1 fill-current" />
-                        {t('저장됨', 'Saved')}
+                      <span className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center">
+                        <Heart className="h-3 w-3 mr-1 fill-current" />
+                        {t('좋아요', 'Liked')}
                       </span>
                     </div>
 
@@ -204,6 +317,16 @@ export const SavedClubsPage: React.FC = () => {
                       {clubDescription}
                     </p>
 
+                    {/* Category */}
+                    <div>
+                      <h4 className="font-semibold text-gray-800 mb-2">
+                        {t('카테고리', 'Category')}
+                      </h4>
+                      <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">
+                        {categoryName}
+                      </span>
+                    </div>
+
                     {/* Officers */}
                     <div>
                       <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
@@ -220,23 +343,6 @@ export const SavedClubsPage: React.FC = () => {
                               {language === 'ko' ? officer.role.ko : officer.role.en}
                             </span>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Activities */}
-                    <div>
-                      <h4 className="font-semibold text-gray-800 mb-2">
-                        {t('주요 활동', 'Main Activities')}
-                      </h4>
-                      <div className="flex flex-wrap gap-1">
-                        {club.activities.slice(0, 3).map((activity, index) => (
-                          <span
-                            key={index}
-                            className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs"
-                          >
-                            {language === 'ko' ? activity.ko : activity.en}
-                          </span>
                         ))}
                       </div>
                     </div>

@@ -5,9 +5,12 @@ import { useAuth } from '../contexts/AuthContext';
 interface ClubInteractions {
   isSaved: boolean;
   isHearted: boolean;
+  hasApplied: boolean;
+  applicationStatus: string;
   savedCount: number;
   heartsCount: number;
   sharesCount: number;
+  applicationsCount: number;
 }
 
 export const useClubInteractions = (clubId: string) => {
@@ -15,9 +18,12 @@ export const useClubInteractions = (clubId: string) => {
   const [interactions, setInteractions] = useState<ClubInteractions>({
     isSaved: false,
     isHearted: false,
+    hasApplied: false,
+    applicationStatus: 'none',
     savedCount: 0,
     heartsCount: 0,
-    sharesCount: 0
+    sharesCount: 0,
+    applicationsCount: 0
   });
   const [loading, setLoading] = useState(true);
 
@@ -36,10 +42,20 @@ export const useClubInteractions = (clubId: string) => {
         console.error('Error loading counts:', countsError);
       }
 
-      const countsData = counts?.[0] || { saved_count: 0, hearts_count: 0, shares_count: 0 };
+      const countsData = counts?.[0] || { 
+        applications_count: 0, 
+        saved_count: 0, 
+        hearts_count: 0, 
+        shares_count: 0 
+      };
       console.log('Counts data:', countsData);
 
-      let userInteractions = { is_saved: false, is_hearted: false };
+      let userInteractions = { 
+        has_applied: false, 
+        application_status: 'none', 
+        is_saved: false, 
+        is_hearted: false 
+      };
 
       // Get user-specific interactions if logged in
       if (user) {
@@ -52,7 +68,12 @@ export const useClubInteractions = (clubId: string) => {
         if (userError) {
           console.error('Error loading user interactions:', userError);
         } else {
-          userInteractions = userData?.[0] || { is_saved: false, is_hearted: false };
+          userInteractions = userData?.[0] || { 
+            has_applied: false, 
+            application_status: 'none', 
+            is_saved: false, 
+            is_hearted: false 
+          };
           console.log('User interactions:', userInteractions);
         }
       }
@@ -60,9 +81,12 @@ export const useClubInteractions = (clubId: string) => {
       setInteractions({
         isSaved: userInteractions.is_saved,
         isHearted: userInteractions.is_hearted,
+        hasApplied: userInteractions.has_applied,
+        applicationStatus: userInteractions.application_status,
         savedCount: Number(countsData.saved_count) || 0,
         heartsCount: Number(countsData.hearts_count) || 0,
-        sharesCount: Number(countsData.shares_count) || 0
+        sharesCount: Number(countsData.shares_count) || 0,
+        applicationsCount: Number(countsData.applications_count) || 0
       });
     } catch (error) {
       console.error('Error loading club interactions:', error);
@@ -74,6 +98,71 @@ export const useClubInteractions = (clubId: string) => {
   useEffect(() => {
     loadInteractions();
   }, [loadInteractions]);
+
+  const applyToClub = useCallback(async (applicationMessage?: string) => {
+    if (!user || !clubId) {
+      console.log('User not authenticated or no club ID');
+      return;
+    }
+
+    console.log('Applying to club:', clubId, 'with message:', applicationMessage);
+
+    try {
+      const { error } = await supabase
+        .from('club_applications')
+        .insert({
+          user_id: user.id,
+          club_id: clubId,
+          application_message: applicationMessage || null,
+          status: 'pending'
+        });
+
+      if (error) {
+        console.error('Error applying to club:', error);
+        return;
+      }
+
+      console.log('Successfully applied to club');
+      setInteractions(prev => ({
+        ...prev,
+        hasApplied: true,
+        applicationStatus: 'pending',
+        applicationsCount: prev.applicationsCount + 1
+      }));
+    } catch (error) {
+      console.error('Error applying to club:', error);
+    }
+  }, [user, clubId]);
+
+  const withdrawApplication = useCallback(async () => {
+    if (!user || !clubId) {
+      console.log('User not authenticated or no club ID');
+      return;
+    }
+
+    console.log('Withdrawing application for club:', clubId);
+
+    try {
+      const { error } = await supabase
+        .from('club_applications')
+        .update({ status: 'withdrawn' })
+        .eq('user_id', user.id)
+        .eq('club_id', clubId);
+
+      if (error) {
+        console.error('Error withdrawing application:', error);
+        return;
+      }
+
+      console.log('Successfully withdrew application');
+      setInteractions(prev => ({
+        ...prev,
+        applicationStatus: 'withdrawn'
+      }));
+    } catch (error) {
+      console.error('Error withdrawing application:', error);
+    }
+  }, [user, clubId]);
 
   const toggleSaved = useCallback(async () => {
     if (!user || !clubId) {
@@ -215,6 +304,8 @@ export const useClubInteractions = (clubId: string) => {
   return {
     interactions,
     loading,
+    applyToClub,
+    withdrawApplication,
     toggleSaved,
     toggleHeart,
     shareClub
