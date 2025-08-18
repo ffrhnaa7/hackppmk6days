@@ -70,7 +70,7 @@ export const ClubDetailPage: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Back Button */}
+      {/* Navigation Header */}
       <div className="mb-6">
         <Link to="/clubs">
           <ColorfulButton variant="ghost" className="flex items-center space-x-2">
@@ -108,22 +108,26 @@ export const ClubDetailPage: React.FC = () => {
 
           {/* Club Info Overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-8">
-            <h1 className="text-4xl font-bold text-white mb-4">{clubName}</h1>
-            <div className="flex flex-wrap items-center gap-6 text-blue-200">
-              <div className="flex items-center space-x-2">
-                <Calendar className="h-5 w-5" />
-                <span>{t(`${club.established}년 설립`, `Established ${club.established}`)}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Users className="h-5 w-5" />
-                <span>{club.memberCount} {t('명', 'members')}</span>
-              </div>
-              {club.country && (
-                <div className="flex items-center space-x-2">
-                  <MapPin className="h-5 w-5" />
-                  <span>{club.country}</span>
+            <div className="flex items-end justify-between">
+              <div className="flex-1">
+                <h1 className="text-4xl font-bold text-white mb-4">{clubName}</h1>
+                <div className="flex flex-wrap items-center gap-6 text-blue-200">
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="h-5 w-5" />
+                    <span>{t(`${club.established}년 설립`, `Established ${club.established}`)}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Users className="h-5 w-5" />
+                    <span>{club.memberCount} {t('명', 'members')}</span>
+                  </div>
+                  {club.country && (
+                    <div className="flex items-center space-x-2">
+                      <MapPin className="h-5 w-5" />
+                      <span>{club.country}</span>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
@@ -197,7 +201,7 @@ export const ClubDetailPage: React.FC = () => {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Interaction Buttons */}
+          {/* Club Actions */}
           <ColorfulCard>
             <div className="p-6">
               <h3 className="text-lg font-bold text-gray-800 mb-4">

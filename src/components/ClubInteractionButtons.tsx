@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, Bookmark, Share2, Copy, Mail, MessageSquare, Check, Loader2, UserPlus, UserMinus } from 'lucide-react';
+import { Heart, Bookmark, Copy, Mail, MessageSquare, Check, Loader2, UserPlus, UserMinus, ExternalLink } from 'lucide-react';
 import { ColorfulButton } from './ColorfulButton';
 import { useClubInteractions } from '../hooks/useClubInteractions';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -23,20 +23,17 @@ export const ClubInteractionButtons: React.FC<ClubInteractionButtonsProps> = ({
   recruiting = true
 }) => {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const { 
     interactions, 
     loading, 
     applyToClub, 
     withdrawApplication, 
     toggleSaved, 
-    toggleHeart, 
-    shareClub 
+    toggleHeart
   } = useClubInteractions(clubId);
-  const [showShareMenu, setShowShareMenu] = useState(false);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [applicationMessage, setApplicationMessage] = useState('');
-  const [copySuccess, setCopySuccess] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const handleApply = async () => {
@@ -95,64 +92,6 @@ export const ClubInteractionButtons: React.FC<ClubInteractionButtonsProps> = ({
     setActionLoading('heart');
     await toggleHeart();
     setActionLoading(null);
-  };
-
-  const handleShare = async (type: 'link' | 'email' | 'social') => {
-    const clubUrl = `${window.location.origin}/club/${clubId}`;
-    
-    switch (type) {
-      case 'link':
-        try {
-          await navigator.clipboard.writeText(clubUrl);
-          setCopySuccess(true);
-          setTimeout(() => setCopySuccess(false), 2000);
-          if (user) {
-            await shareClub('link');
-          }
-        } catch (error) {
-          console.error('Failed to copy link:', error);
-        }
-        break;
-        
-      case 'email':
-        const emailSubject = encodeURIComponent(`Check out ${clubName} club!`);
-        const emailBody = encodeURIComponent(
-          `Hi! I thought you might be interested in this club: ${clubName}\n\nCheck it out here: ${clubUrl}\n\nBest regards!`
-        );
-        window.open(`mailto:?subject=${emailSubject}&body=${emailBody}`);
-        if (user) {
-          await shareClub('email');
-        }
-        break;
-        
-      case 'social':
-        const shareText = encodeURIComponent(`Check out ${clubName} club! ${clubUrl}`);
-        if (navigator.share) {
-          try {
-            await navigator.share({
-              title: `${clubName} Club`,
-              text: `Check out ${clubName} club!`,
-              url: clubUrl
-            });
-            if (user) {
-              await shareClub('social');
-            }
-          } catch (error) {
-            window.open(`https://twitter.com/intent/tweet?text=${shareText}`);
-            if (user) {
-              await shareClub('social');
-            }
-          }
-        } else {
-          window.open(`https://twitter.com/intent/tweet?text=${shareText}`);
-          if (user) {
-            await shareClub('social');
-          }
-        }
-        break;
-    }
-    
-    setShowShareMenu(false);
   };
 
   const getApplicationButtonContent = () => {
@@ -218,7 +157,6 @@ export const ClubInteractionButtons: React.FC<ClubInteractionButtonsProps> = ({
   if (loading) {
     return (
       <div className={`flex space-x-2 ${className}`}>
-        <div className="animate-pulse bg-gray-200 rounded-lg h-8 w-16"></div>
         <div className="animate-pulse bg-gray-200 rounded-lg h-8 w-16"></div>
         <div className="animate-pulse bg-gray-200 rounded-lg h-8 w-16"></div>
         <div className="animate-pulse bg-gray-200 rounded-lg h-8 w-16"></div>
@@ -323,68 +261,6 @@ export const ClubInteractionButtons: React.FC<ClubInteractionButtonsProps> = ({
             </span>
           )}
         </ColorfulButton>
-
-        {/* Share Button */}
-        <div className="relative">
-          <ColorfulButton
-            variant="ghost"
-            size={buttonSize}
-            onClick={() => setShowShareMenu(!showShareMenu)}
-            className="hover:bg-mint-50 hover:text-mint-600"
-            title={t('공유하기', 'Share')}
-          >
-            <Share2 className={`h-4 w-4 ${size === 'sm' ? 'mr-1' : 'mr-2'}`} />
-            {size !== 'sm' && (
-              <span>
-                {t('공유', 'Share')}
-                {showCounts && interactions.sharesCount > 0 && ` (${interactions.sharesCount})`}
-              </span>
-            )}
-          </ColorfulButton>
-
-          {/* Share Menu */}
-          {showShareMenu && (
-            <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50 min-w-48">
-              <button
-                onClick={() => handleShare('link')}
-                className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center space-x-3"
-              >
-                {copySuccess ? (
-                  <Check className="h-4 w-4 text-green-500" />
-                ) : (
-                  <Copy className="h-4 w-4 text-gray-500" />
-                )}
-                <span className="text-sm">
-                  {copySuccess ? t('링크 복사됨!', 'Link copied!') : t('링크 복사', 'Copy link')}
-                </span>
-              </button>
-              
-              <button
-                onClick={() => handleShare('email')}
-                className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center space-x-3"
-              >
-                <Mail className="h-4 w-4 text-gray-500" />
-                <span className="text-sm">{t('이메일로 공유', 'Share via email')}</span>
-              </button>
-              
-              <button
-                onClick={() => handleShare('social')}
-                className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center space-x-3"
-              >
-                <MessageSquare className="h-4 w-4 text-gray-500" />
-                <span className="text-sm">{t('소셜 미디어', 'Social media')}</span>
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Click outside to close share menu */}
-        {showShareMenu && (
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setShowShareMenu(false)}
-          />
-        )}
       </div>
 
       {/* Application Modal */}
