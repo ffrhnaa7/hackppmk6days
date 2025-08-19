@@ -13,11 +13,9 @@ import {
   Bookmark,
   Heart,
   ChevronDown,
-  LucideIcon,
-  Zap
+  LucideIcon
 } from 'lucide-react';
 import { ColorfulButton } from './ColorfulButton';
-import { ModernButton } from './ModernButton';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -94,17 +92,17 @@ export const Navbar: React.FC = () => {
   const currentLanguage = languageOptions.find(lang => lang.code === language);
 
   return (
-    <nav className="bg-white/95 backdrop-blur-md shadow-modern sticky top-0 z-50 border-b border-gray-100/50">
+    <nav className="bg-white shadow-lg sticky top-0 z-50 border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-3 group">
-              <div className="w-10 h-10 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-modern group-hover:shadow-modern-lg transition-all duration-300 hover-scale">
-                <Zap className="h-5 w-5 text-white" />
+              <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
+                <span className="text-white font-bold text-lg">6D</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-xl font-bold text-modern-gradient heading-modern">
+                <span className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
                   6DAYS
                 </span>
                 <span className="text-xs text-gray-500 font-medium">
@@ -120,10 +118,10 @@ export const Navbar: React.FC = () => {
               <Link
                 key={path}
                 to={path}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-2xl text-sm font-medium transition-all duration-300 hover-lift ${
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                   isActive(path)
-                    ? 'bg-gradient-primary text-white shadow-modern transform scale-105'
-                    : 'text-gray-700 hover:text-mint-600 hover:bg-mint-50'
+                    ? 'bg-gradient-primary text-white shadow-lg transform scale-105'
+                    : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -138,7 +136,7 @@ export const Navbar: React.FC = () => {
             <div className="relative" ref={languageRef}>
               <button
                 onClick={() => setIsLanguageOpen(!isLanguageOpen)}
-                className="flex items-center space-x-2 px-3 py-2 rounded-2xl text-sm font-medium text-gray-700 hover:text-mint-600 hover:bg-mint-50 transition-all duration-300 border-modern hover-scale"
+                className="flex items-center space-x-2 px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 border border-gray-200 hover:border-blue-200"
               >
                 <Globe className="h-4 w-4" />
                 <span className="flex items-center space-x-1">
@@ -149,7 +147,7 @@ export const Navbar: React.FC = () => {
               </button>
 
               {isLanguageOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white/95 backdrop-blur-md rounded-2xl shadow-modern-lg border border-gray-200/60 py-2 z-50">
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
                   {languageOptions.map((lang) => (
                     <button
                       key={lang.code}
@@ -159,14 +157,14 @@ export const Navbar: React.FC = () => {
                         }
                         setIsLanguageOpen(false);
                       }}
-                      className={`w-full flex items-center space-x-3 px-4 py-2 text-sm hover:bg-mint-50 transition-colors duration-200 ${
-                        lang.code === language ? 'bg-mint-50 text-mint-600 font-medium' : 'text-gray-700'
+                      className={`w-full flex items-center space-x-3 px-4 py-2 text-sm hover:bg-blue-50 transition-colors duration-200 ${
+                        lang.code === language ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'
                       }`}
                     >
                       <span className="text-lg">{lang.flag}</span>
                       <span>{lang.label}</span>
                       {lang.code === language && (
-                        <div className="ml-auto w-2 h-2 bg-mint-600 rounded-full"></div>
+                        <div className="ml-auto w-2 h-2 bg-blue-600 rounded-full"></div>
                       )}
                     </button>
                   ))}
@@ -178,7 +176,7 @@ export const Navbar: React.FC = () => {
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center space-x-2 px-3 py-2 rounded-2xl text-sm font-medium text-gray-700 hover:text-mint-600 hover:bg-mint-50 transition-all duration-300 border-modern hover-scale"
+                  className="flex items-center space-x-2 px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 border border-gray-200 hover:border-blue-200"
                 >
                   <User className="h-4 w-4" />
                   <span className="hidden lg:inline">{user.email?.split('@')[0]}</span>
@@ -186,7 +184,7 @@ export const Navbar: React.FC = () => {
                 </button>
 
                 {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white/95 backdrop-blur-md rounded-2xl shadow-modern-lg border border-gray-200/60 py-2 z-50">
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
                     {profileMenuItems.map((item, index) => {
                       if (item.type === 'divider') {
                         return (
@@ -207,14 +205,14 @@ export const Navbar: React.FC = () => {
                           key={item.path}
                           to={item.path}
                           onClick={() => setIsProfileOpen(false)}
-                          className={`flex items-center space-x-3 px-4 py-2 text-sm hover:bg-mint-50 transition-colors duration-200 ${
-                            isActive(item.path) ? 'bg-mint-50 text-mint-600 font-medium' : 'text-gray-700'
+                          className={`flex items-center space-x-3 px-4 py-2 text-sm hover:bg-blue-50 transition-colors duration-200 ${
+                            isActive(item.path) ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'
                           }`}
                         >
                           <Icon className="h-4 w-4" />
                           <span>{item.label}</span>
                           {isActive(item.path) && (
-                            <div className="ml-auto w-2 h-2 bg-mint-600 rounded-full"></div>
+                            <div className="ml-auto w-2 h-2 bg-blue-600 rounded-full"></div>
                           )}
                         </Link>
                       );
@@ -233,9 +231,9 @@ export const Navbar: React.FC = () => {
               </div>
             ) : (
               <Link to="/auth">
-                <ModernButton size="sm" className="shadow-modern hover:shadow-modern-lg">
+                <ColorfulButton size="sm" className="shadow-lg hover:shadow-xl transition-all duration-300">
                   {t('로그인', 'Sign In')}
-                </ModernButton>
+                </ColorfulButton>
               </Link>
             )}
           </div>
@@ -244,7 +242,7 @@ export const Navbar: React.FC = () => {
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="text-gray-700 hover:text-mint-600 focus:outline-none focus:text-mint-600 transition-colors duration-200 p-2 rounded-xl hover:bg-mint-50 hover-scale"
+              className="text-gray-700 hover:text-blue-600 focus:outline-none focus:text-blue-600 transition-colors duration-200 p-2 rounded-lg hover:bg-blue-50"
             >
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
@@ -254,7 +252,7 @@ export const Navbar: React.FC = () => {
 
       {/* Mobile Navigation */}
       {isOpen && (
-        <div className="md:hidden bg-white/95 backdrop-blur-md border-t border-gray-200/60 shadow-modern">
+        <div className="md:hidden bg-white border-t border-gray-200 shadow-lg">
           <div className="px-4 pt-4 pb-6 space-y-2">
             {/* Main Navigation */}
             {navItems.map(({ path, icon: Icon, label }) => (
@@ -262,10 +260,10 @@ export const Navbar: React.FC = () => {
                 key={path}
                 to={path}
                 onClick={() => setIsOpen(false)}
-                className={`flex items-center space-x-3 px-4 py-3 rounded-2xl text-base font-medium transition-all duration-300 ${
+                className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${
                   isActive(path)
-                    ? 'bg-gradient-primary text-white shadow-modern'
-                    : 'text-gray-700 hover:text-mint-600 hover:bg-mint-50'
+                    ? 'bg-gradient-primary text-white shadow-lg'
+                    : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
                 }`}
               >
                 <Icon className="h-5 w-5" />
@@ -302,10 +300,10 @@ export const Navbar: React.FC = () => {
                       key={item.path}
                       to={item.path}
                       onClick={() => setIsOpen(false)}
-                      className={`flex items-center space-x-3 px-4 py-3 rounded-2xl text-base font-medium transition-all duration-300 ${
+                      className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${
                         isActive(item.path) 
-                          ? 'bg-gradient-primary text-white shadow-modern'
-                          : 'text-gray-700 hover:text-mint-600 hover:bg-mint-50'
+                          ? 'bg-gradient-primary text-white shadow-lg'
+                          : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
                       }`}
                     >
                       <Icon className="h-5 w-5" />
@@ -333,16 +331,16 @@ export const Navbar: React.FC = () => {
                   }
                   setIsOpen(false);
                 }}
-                className={`flex items-center space-x-3 px-4 py-3 rounded-2xl text-base font-medium transition-all duration-300 w-full ${
+                className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 w-full ${
                   lang.code === language
-                    ? 'bg-mint-50 text-mint-600 border-2 border-mint-200'
-                    : 'text-gray-700 hover:text-mint-600 hover:bg-mint-50'
+                    ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                    : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
                 }`}
               >
                 <span className="text-lg">{lang.flag}</span>
                 <span>{lang.label}</span>
                 {lang.code === language && (
-                  <div className="ml-auto w-2 h-2 bg-mint-600 rounded-full"></div>
+                  <div className="ml-auto w-2 h-2 bg-blue-600 rounded-full"></div>
                 )}
               </button>
             ))}
@@ -352,7 +350,7 @@ export const Navbar: React.FC = () => {
                 <div className="border-t border-gray-200 my-4"></div>
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center space-x-3 px-4 py-3 rounded-2xl text-base font-medium text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-300 w-full"
+                  className="flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200 w-full"
                 >
                   <LogOut className="h-5 w-5" />
                   <span>{t('로그아웃', 'Sign Out')}</span>
@@ -366,9 +364,9 @@ export const Navbar: React.FC = () => {
                   onClick={() => setIsOpen(false)}
                   className="block px-4 py-2"
                 >
-                  <ModernButton size="sm" className="w-full shadow-modern">
+                  <ColorfulButton size="sm" className="w-full shadow-lg">
                     {t('로그인', 'Sign In')}
-                  </ModernButton>
+                  </ColorfulButton>
                 </Link>
               </>
             )}

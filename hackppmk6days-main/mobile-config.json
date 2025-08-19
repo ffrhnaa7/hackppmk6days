@@ -8,25 +8,16 @@
     "outputDir": "dist",
     "publicPath": "/",
     "minify": true,
-    "sourcemap": false,
-    "target": "es2015"
+    "sourcemap": false
   },
   "deployment": {
     "type": "static",
     "target": "mobile-preview",
-    "compression": true,
-    "gzip": true
+    "compression": true
   },
   "metadata": {
     "author": "Korean Campus Connect Team",
     "category": "education",
-    "keywords": ["korean", "campus", "events", "clubs", "cultural"],
-    "platform": "web"
-  },
-  "settings": {
-    "isPublic": true,
-    "enableAnalytics": false,
-    "enablePWA": true,
-    "enableServiceWorker": true
+    "keywords": ["korean", "campus", "events", "clubs", "cultural"]
   }
 }
