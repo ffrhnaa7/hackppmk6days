@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Users, Zap, TrendingUp, Clock, Target, X, Award, Code, Heart, ArrowRight, Sparkles, Activity, Coffee, Rocket, Star } from 'lucide-react';
+import { Calendar, Users, Zap, TrendingUp, Clock, Target, X, Award, Code, Heart, ArrowRight, Sparkles, Activity, Coffee, Rocket, Star, CheckCircle, BarChart3, Brain, Flame } from 'lucide-react';
 import { ColorfulCard } from '../components/ColorfulCard';
 import { ColorfulButton } from '../components/ColorfulButton';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -69,6 +69,48 @@ export const HomePage: React.FC = () => {
       content: { ko: '생산성이 놀랍게 향상되었어요', en: 'Productivity improved amazingly' },
       rating: 5,
       avatar: '👩‍💻'
+    }
+  ];
+
+  const lifestyleStats = [
+    {
+      icon: <Brain className="h-8 w-8" />,
+      value: '87%',
+      label: { ko: '집중력 향상', en: 'Focus Improvement' },
+      color: 'from-purple-400 to-purple-600'
+    },
+    {
+      icon: <Heart className="h-8 w-8" />,
+      value: '92%',
+      label: { ko: '스트레스 감소', en: 'Stress Reduction' },
+      color: 'from-rose-400 to-rose-600'
+    },
+    {
+      icon: <Flame className="h-8 w-8" />,
+      value: '95%',
+      label: { ko: '에너지 증가', en: 'Energy Boost' },
+      color: 'from-orange-400 to-orange-600'
+    },
+    {
+      icon: <BarChart3 className="h-8 w-8" />,
+      value: '89%',
+      label: { ko: '생산성 향상', en: 'Productivity Gain' },
+      color: 'from-mint-400 to-mint-600'
+    }
+  ];
+
+  const philosophyPoints = [
+    {
+      title: { ko: '지속가능한 성장', en: 'Sustainable Growth' },
+      description: { ko: '무리하지 않고 꾸준히 성장하는 방법', en: 'Growing steadily without overexertion' }
+    },
+    {
+      title: { ko: '과학적 접근', en: 'Scientific Approach' },
+      description: { ko: '연구 기반의 최적화된 일정 관리', en: 'Research-based optimized scheduling' }
+    },
+    {
+      title: { ko: '완벽한 휴식', en: 'Perfect Rest' },
+      description: { ko: '진정한 회복을 위한 완전한 휴식', en: 'Complete rest for true recovery' }
     }
   ];
 
@@ -387,28 +429,103 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Final CTA */}
+      {/* Statistics Section - NEW */}
       <section className="py-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="bg-gradient-to-r from-mint-600 to-ocean-600 rounded-3xl p-12 shadow-2xl">
-            <h2 className="text-4xl font-bold text-white mb-6">
-              {t('지금 시작하세요', 'Start Now')}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-800 mb-4">
+              {t('실제 효과', 'Real Impact')}
             </h2>
-            <p className="text-xl text-white/90 mb-8">
-              {t(
-                '더 나은 내일을 위한 첫 걸음',
-                'The first step towards a better tomorrow'
-              )}
+            <p className="text-xl text-gray-600">
+              {t('6DAYS 사용자들의 평균 개선 지표', 'Average improvement metrics from 6DAYS users')}
             </p>
-            <button
-              onClick={handleStartNow}
-              className="px-12 py-4 bg-white text-mint-600 font-bold rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
-            >
-              {t('무료 체험 시작', 'Start Free Trial')}
-            </button>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {lifestyleStats.map((stat, index) => (
+              <div key={index} className="text-center group">
+                <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${stat.color} text-white mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                  {stat.icon}
+                </div>
+                <div className="text-3xl font-bold text-gray-800 mb-2">{stat.value}</div>
+                <div className="text-sm text-gray-600">{stat.label.ko}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
+
+      {/* Philosophy Section - NEW */}
+      <section className="py-20 bg-gradient-to-br from-sage-50 to-mint-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-4xl font-bold text-gray-800 mb-6">
+                {t('6DAYS 철학', '6DAYS Philosophy')}
+              </h2>
+              <p className="text-lg text-gray-600 mb-8">
+                {t(
+                  '우리는 더 많이 일하는 것이 아닌, 더 현명하게 일하고 완벽하게 쉬는 것이 진정한 성공의 열쇠라고 믿습니다.',
+                  'We believe the key to true success is not working more, but working smarter and resting completely.'
+                )}
+              </p>
+              <div className="space-y-4">
+                {philosophyPoints.map((point, index) => (
+                  <div key={index} className="flex items-start space-x-3">
+                    <CheckCircle className="h-6 w-6 text-mint-600 flex-shrink-0 mt-1" />
+                    <div>
+                      <h4 className="font-semibold text-gray-800 mb-1">{point.title.ko}</h4>
+                      <p className="text-gray-600">{point.description.ko}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-mint-400 to-ocean-400 rounded-3xl blur-2xl opacity-20"></div>
+              <div className="relative bg-white rounded-3xl p-8 shadow-xl">
+                <div className="text-center">
+                  <div className="text-6xl font-bold bg-gradient-to-r from-mint-600 to-ocean-600 bg-clip-text text-transparent mb-4">
+                    6:1
+                  </div>
+                  <p className="text-xl font-semibold text-gray-800 mb-2">
+                    {t('황금 비율', 'Golden Ratio')}
+                  </p>
+                  <p className="text-gray-600">
+                    {t(
+                      '6일의 집중된 활동과 1일의 완전한 휴식이 만드는 완벽한 균형',
+                      'Perfect balance created by 6 days of focused activity and 1 day of complete rest'
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer Section - NEW */}
+      <footer className="py-12 bg-gray-50 border-t border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="mb-4 md:mb-0">
+              <h3 className="text-2xl font-bold bg-gradient-to-r from-mint-600 to-ocean-600 bg-clip-text text-transparent">
+                6DAYS
+              </h3>
+              <p className="text-gray-600 mt-1">
+                {t('지속가능한 라이프스타일 플랫폼', 'Sustainable Lifestyle Platform')}
+              </p>
+            </div>
+            <div className="flex items-center space-x-6 text-sm text-gray-600">
+              <span>© 2024 6DAYS</span>
+              <span>•</span>
+              <span>PPMK Hackathon Project</span>
+              <span>•</span>
+              <span>Created by Farhana</span>
+            </div>
+          </div>
+        </div>
+      </footer>
 
       {/* Project Info Modal */}
       {showProjectInfo && <ProjectInfoModal />}

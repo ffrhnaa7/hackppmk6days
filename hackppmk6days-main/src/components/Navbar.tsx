@@ -1,248 +1,125 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { 
-  Menu, 
-  X, 
-  Home, 
-  Users, 
-  Calendar, 
-  User, 
-  LogOut, 
-  Globe,
-  UserPlus,
-  Bookmark,
-  Heart,
-  ChevronDown,
-  LucideIcon
-} from 'lucide-react';
-import { ColorfulButton } from './ColorfulButton';
-import { useLanguage } from '../contexts/LanguageContext';
+import React, { useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Menu, X, Home, Calendar, Users, User, LogOut, Settings, Globe, Bell, ClipboardList, Heart, Bookmark } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-
-interface NavItem {
-  path: string;
-  icon: LucideIcon;
-  label: string;
-}
-
-interface ProfileMenuItem {
-  path?: string;
-  icon?: LucideIcon;
-  label: string;
-  type?: 'divider';
-}
+import { useLanguage } from '../contexts/LanguageContext';
 
 export const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const { language, toggleLanguage, t } = useLanguage();
   const { user, signOut } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
+  const navigate = useNavigate();
   const location = useLocation();
-  const languageRef = useRef<HTMLDivElement>(null);
-  const profileRef = useRef<HTMLDivElement>(null);
-
-  const isActive = (path: string) => location.pathname === path;
 
   const handleSignOut = async () => {
     await signOut();
-    setIsOpen(false);
-    setIsProfileOpen(false);
+    navigate('/');
   };
 
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (languageRef.current && !languageRef.current.contains(event.target as Node)) {
-        setIsLanguageOpen(false);
-      }
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-        setIsProfileOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const navItems: NavItem[] = [
-    { path: '/', icon: Home, label: t('홈', 'Home') },
-    { path: '/clubs', icon: Users, label: t('동아리', 'Clubs') },
-    { path: '/events', icon: Calendar, label: t('이벤트', 'Events') },
+  const navItems = [
+    { path: '/', label: t('홈', 'Home'), icon: Home },
+    { path: '/events', label: t('이벤트', 'Events'), icon: Calendar },
+    { path: '/clubs', label: t('동아리', 'Clubs'), icon: Users },
   ];
 
-  const profileMenuItems: ProfileMenuItem[] = user ? [
-    { path: '/profile', icon: User, label: t('내 프로필', 'My Profile') },
-    { path: '/my-applications', icon: UserPlus, label: t('내 지원 현황', 'My Applications') },
-    { 
-      type: 'divider',
-      label: t('저장된 항목', 'Saved Items')
-    },
-    { path: '/saved-clubs', icon: Bookmark, label: t('저장된 동아리', 'Saved Clubs') },
-    { path: '/liked-clubs', icon: Heart, label: t('좋아요한 동아리', 'Liked Clubs') },
-  ] : [];
-
-  const languageOptions = [
-    { code: 'ko', label: '한국어', flag: '🇰🇷' },
-    { code: 'en', label: 'English', flag: '🇺🇸' }
+  const userMenuItems = [
+    { path: '/profile', label: t('프로필', 'Profile'), icon: User },
+    { path: '/my-applications', label: t('내 신청', 'My Applications'), icon: ClipboardList },
+    { path: '/saved-clubs', label: t('저장한 동아리', 'Saved Clubs'), icon: Bookmark },
+    { path: '/liked-clubs', label: t('좋아요한 동아리', 'Liked Clubs'), icon: Heart },
   ];
-
-  const currentLanguage = languageOptions.find(lang => lang.code === language);
 
   return (
-    <nav className="bg-white shadow-lg sticky top-0 z-50 border-b border-gray-100">
+    <nav className="bg-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          {/* Logo */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-3 group">
-              <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
-                <span className="text-white font-bold text-lg">6D</span>
+            {/* Logo */}
+            <Link to="/" className="flex items-center space-x-2">
+              <div className="w-10 h-10 bg-gradient-to-r from-mint-500 to-ocean-500 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xl">6</span>
               </div>
-              <div className="flex flex-col">
-                <span className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                  6DAYS
-                </span>
-                <span className="text-xs text-gray-500 font-medium">
-                  {t('더 나은 일상을 위해', 'For Better Living')}
-                </span>
-              </div>
+              <span className="font-bold text-xl text-gray-800">DAYS</span>
             </Link>
-          </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-2">
-            {navItems.map(({ path, icon: Icon, label }) => (
-              <Link
-                key={path}
-                to={path}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  isActive(path)
-                    ? 'bg-gradient-primary text-white shadow-lg transform scale-105'
-                    : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                <span>{label}</span>
-              </Link>
-            ))}
-          </div>
-
-          {/* Desktop User Menu & Language Toggle */}
-          <div className="hidden md:flex items-center space-x-3">
-            {/* Language Dropdown */}
-            <div className="relative" ref={languageRef}>
-              <button
-                onClick={() => setIsLanguageOpen(!isLanguageOpen)}
-                className="flex items-center space-x-2 px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 border border-gray-200 hover:border-blue-200"
-              >
-                <Globe className="h-4 w-4" />
-                <span className="flex items-center space-x-1">
-                  <span>{currentLanguage?.flag}</span>
-                  <span>{currentLanguage?.label}</span>
-                </span>
-                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isLanguageOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {isLanguageOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
-                  {languageOptions.map((lang) => (
-                    <button
-                      key={lang.code}
-                      onClick={() => {
-                        if (lang.code !== language) {
-                          toggleLanguage();
-                        }
-                        setIsLanguageOpen(false);
-                      }}
-                      className={`w-full flex items-center space-x-3 px-4 py-2 text-sm hover:bg-blue-50 transition-colors duration-200 ${
-                        lang.code === language ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'
-                      }`}
-                    >
-                      <span className="text-lg">{lang.flag}</span>
-                      <span>{lang.label}</span>
-                      {lang.code === language && (
-                        <div className="ml-auto w-2 h-2 bg-blue-600 rounded-full"></div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {user ? (
-              <div className="relative" ref={profileRef}>
-                <button
-                  onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center space-x-2 px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 border border-gray-200 hover:border-blue-200"
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-4 ml-10">
+              {navItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    location.pathname === item.path
+                      ? 'bg-mint-50 text-mint-700'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
                 >
-                  <User className="h-4 w-4" />
-                  <span className="hidden lg:inline">{user.email?.split('@')[0]}</span>
-                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Right side items */}
+          <div className="flex items-center space-x-4">
+            {/* Language Toggle */}
+            <button
+              onClick={() => setLanguage(language === 'ko' ? 'en' : 'ko')}
+              className="flex items-center space-x-1 px-3 py-1 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+            >
+              <Globe className="h-4 w-4" />
+              <span>{language === 'ko' ? 'EN' : '한'}</span>
+            </button>
+
+            {/* Notifications */}
+            <button className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+              <Bell className="h-5 w-5" />
+            </button>
+
+            {/* User Menu */}
+            {user ? (
+              <div className="relative group">
+                <button className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+                  <User className="h-5 w-5" />
+                  <span className="hidden md:block">{user.email?.split('@')[0]}</span>
                 </button>
-
-                {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
-                    {profileMenuItems.map((item, index) => {
-                      if (item.type === 'divider') {
-                        return (
-                          <div key={index} className="px-4 py-2">
-                            <div className="border-t border-gray-200 mb-2"></div>
-                            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                              {item.label}
-                            </span>
-                          </div>
-                        );
-                      }
-
-                      if (!item.path || !item.icon) return null;
-
-                      const Icon = item.icon;
-                      return (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          onClick={() => setIsProfileOpen(false)}
-                          className={`flex items-center space-x-3 px-4 py-2 text-sm hover:bg-blue-50 transition-colors duration-200 ${
-                            isActive(item.path) ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'
-                          }`}
-                        >
-                          <Icon className="h-4 w-4" />
-                          <span>{item.label}</span>
-                          {isActive(item.path) && (
-                            <div className="ml-auto w-2 h-2 bg-blue-600 rounded-full"></div>
-                          )}
-                        </Link>
-                      );
-                    })}
-                    
-                    <div className="border-t border-gray-200 my-2"></div>
-                    <button
-                      onClick={handleSignOut}
-                      className="flex items-center space-x-3 px-4 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors duration-200 w-full"
+                
+                {/* Dropdown */}
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200">
+                  {userMenuItems.map((item) => (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
-                      <LogOut className="h-4 w-4" />
-                      <span>{t('로그아웃', 'Sign Out')}</span>
-                    </button>
-                  </div>
-                )}
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </Link>
+                  ))}
+                  <hr className="my-2" />
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center space-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>{t('로그아웃', 'Sign Out')}</span>
+                  </button>
+                </div>
               </div>
             ) : (
-              <Link to="/auth">
-                <ColorfulButton size="sm" className="shadow-lg hover:shadow-xl transition-all duration-300">
-                  {t('로그인', 'Sign In')}
-                </ColorfulButton>
+              <Link
+                to="/auth"
+                className="px-4 py-2 bg-gradient-to-r from-mint-500 to-ocean-500 text-white rounded-lg font-medium hover:shadow-lg transition-shadow"
+              >
+                {t('로그인', 'Sign In')}
               </Link>
             )}
-          </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
+            {/* Mobile menu button */}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="text-gray-700 hover:text-blue-600 focus:outline-none focus:text-blue-600 transition-colors duration-200 p-2 rounded-lg hover:bg-blue-50"
+              className="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-50"
             >
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
@@ -250,124 +127,50 @@ export const Navbar: React.FC = () => {
         </div>
       </div>
 
-      {/* Mobile Navigation */}
+      {/* Mobile menu */}
       {isOpen && (
-        <div className="md:hidden bg-white border-t border-gray-200 shadow-lg">
-          <div className="px-4 pt-4 pb-6 space-y-2">
-            {/* Main Navigation */}
-            {navItems.map(({ path, icon: Icon, label }) => (
+        <div className="md:hidden bg-white border-t">
+          <div className="px-2 pt-2 pb-3 space-y-1">
+            {navItems.map((item) => (
               <Link
-                key={path}
-                to={path}
+                key={item.path}
+                to={item.path}
                 onClick={() => setIsOpen(false)}
-                className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${
-                  isActive(path)
-                    ? 'bg-gradient-primary text-white shadow-lg'
-                    : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
+                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium ${
+                  location.pathname === item.path
+                    ? 'bg-mint-50 text-mint-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
-                <Icon className="h-5 w-5" />
-                <span>{label}</span>
+                <item.icon className="h-5 w-5" />
+                <span>{item.label}</span>
               </Link>
             ))}
-
-            {/* User Menu Items for Mobile */}
+            
             {user && (
               <>
-                <div className="border-t border-gray-200 my-4"></div>
-                <div className="px-2 mb-3">
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    {t('내 계정', 'My Account')}
-                  </span>
-                </div>
-                
-                {profileMenuItems.map((item, index) => {
-                  if (item.type === 'divider') {
-                    return (
-                      <div key={index} className="px-2 py-2">
-                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                          {item.label}
-                        </span>
-                      </div>
-                    );
-                  }
-
-                  if (!item.path || !item.icon) return null;
-
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      onClick={() => setIsOpen(false)}
-                      className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${
-                        isActive(item.path) 
-                          ? 'bg-gradient-primary text-white shadow-lg'
-                          : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
-                      }`}
-                    >
-                      <Icon className="h-5 w-5" />
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </>
-            )}
-
-            <div className="border-t border-gray-200 my-4"></div>
-            
-            {/* Language Selection for Mobile */}
-            <div className="px-2 mb-3">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                {t('언어 설정', 'Language')}
-              </span>
-            </div>
-            {languageOptions.map((lang) => (
-              <button
-                key={lang.code}
-                onClick={() => {
-                  if (lang.code !== language) {
-                    toggleLanguage();
-                  }
-                  setIsOpen(false);
-                }}
-                className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 w-full ${
-                  lang.code === language
-                    ? 'bg-blue-50 text-blue-600 border border-blue-200'
-                    : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
-                }`}
-              >
-                <span className="text-lg">{lang.flag}</span>
-                <span>{lang.label}</span>
-                {lang.code === language && (
-                  <div className="ml-auto w-2 h-2 bg-blue-600 rounded-full"></div>
-                )}
-              </button>
-            ))}
-
-            {user ? (
-              <>
-                <div className="border-t border-gray-200 my-4"></div>
+                <hr className="my-2" />
+                {userMenuItems.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  >
+                    <item.icon className="h-5 w-5" />
+                    <span>{item.label}</span>
+                  </Link>
+                ))}
                 <button
-                  onClick={handleSignOut}
-                  className="flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200 w-full"
+                  onClick={() => {
+                    handleSignOut();
+                    setIsOpen(false);
+                  }}
+                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50 w-full text-left"
                 >
                   <LogOut className="h-5 w-5" />
                   <span>{t('로그아웃', 'Sign Out')}</span>
                 </button>
-              </>
-            ) : (
-              <>
-                <div className="border-t border-gray-200 my-4"></div>
-                <Link
-                  to="/auth"
-                  onClick={() => setIsOpen(false)}
-                  className="block px-4 py-2"
-                >
-                  <ColorfulButton size="sm" className="w-full shadow-lg">
-                    {t('로그인', 'Sign In')}
-                  </ColorfulButton>
-                </Link>
               </>
             )}
           </div>
