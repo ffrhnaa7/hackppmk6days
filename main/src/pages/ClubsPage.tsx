@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, Users, Calendar, MapPin, Star, Sparkles, TrendingUp, Award, Globe, Heart, Bookmark, Eye, Grid3x3, List, ChevronDown } from 'lucide-react';
+import { Search, Filter, Users, Calendar, MapPin, Star, Sparkles, TrendingUp, Award, Globe, Heart, Bookmark, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ColorfulCard } from '../components/ColorfulCard';
 import { ColorfulButton } from '../components/ColorfulButton';
@@ -15,7 +15,6 @@ export const ClubsPage: React.FC = () => {
   const [recruitingOnly, setRecruitingOnly] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'members' | 'established' | 'popular'>('popular');
   const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards');
-  const [showFilters, setShowFilters] = useState(false);
 
   // Helper function to get category name based on language
   const getCategoryName = (category: string) => {
@@ -130,429 +129,518 @@ export const ClubsPage: React.FC = () => {
     switch (category) {
       case '학술':
       case 'Academic':
-        return 'from-blue-400 to-blue-600';
+        return 'bg-blue-100 text-blue-800 border-blue-200';
       case '문화':
       case 'Cultural':
-        return 'from-purple-400 to-purple-600';
+        return 'bg-purple-100 text-purple-800 border-purple-200';
       case '취미':
       case 'Hobby':
-        return 'from-pink-400 to-pink-600';
+        return 'bg-pink-100 text-pink-800 border-pink-200';
       case '봉사':
       case 'Volunteer':
-        return 'from-green-400 to-green-600';
+        return 'bg-green-100 text-green-800 border-green-200';
       case '종교':
       case 'Religious':
-        return 'from-yellow-400 to-yellow-600';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case '체육':
       case 'Sports':
-        return 'from-orange-400 to-orange-600';
+        return 'bg-orange-100 text-orange-800 border-orange-200';
       case '학생회':
       case 'Student Association':
-        return 'from-indigo-400 to-indigo-600';
+        return 'bg-indigo-100 text-indigo-800 border-indigo-200';
       default:
-        return 'from-gray-400 to-gray-600';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Simplified Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">
-            {t('동아리 탐색', 'Explore Clubs')}
-          </h1>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            {t('당신의 열정을 찾아보세요', 'Find your passion')}
-          </p>
-        </div>
-
-        {/* Quick Stats Bar */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-2xl p-4 text-center shadow-sm hover:shadow-md transition-shadow">
-            <div className="text-2xl font-bold text-gray-800">{koreanClubs.length}</div>
-            <div className="text-sm text-gray-500">{t('전체 동아리', 'Total Clubs')}</div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Enhanced Header */}
+      <div className="mb-8 text-center">
+        <div className="flex items-center justify-center mb-6">
+          <div className="bg-gradient-primary rounded-full p-4 mr-4 shadow-lg">
+            <Users className="h-10 w-10 text-white" />
           </div>
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 text-center shadow-sm hover:shadow-md transition-shadow">
-            <div className="text-2xl font-bold text-green-600 flex items-center justify-center">
-              {koreanClubs.filter(c => c.recruiting).length}
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse ml-2"></div>
+          <div>
+            <h1 className="text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
+              {t('동아리 허브', 'Club Hub')}
+            </h1>
+            <p className="text-lg text-gray-500 font-medium">
+              {t('새로운 경험의 시작', 'Start Your New Journey')}
+            </p>
+          </div>
+        </div>
+        <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+          {t('다양한 동아리를 탐색하고 새로운 경험을 시작하세요. 한국 대학 생활의 핵심을 경험해보세요!', 
+              'Explore diverse clubs and start new experiences. Experience the heart of Korean university life!')}
+        </p>
+        
+        {/* Enhanced Quick Stats */}
+        <div className="flex justify-center space-x-8 mt-8">
+          <div className="text-center group">
+            <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 group-hover:border-blue-200">
+              <div className="text-3xl font-bold text-blue-600 mb-2">{koreanClubs.length}</div>
+              <div className="text-sm font-semibold text-gray-600">{t('총 동아리', 'Total Clubs')}</div>
             </div>
-            <div className="text-sm text-gray-500">{t('모집 중', 'Recruiting')}</div>
           </div>
-          <div className="bg-white rounded-2xl p-4 text-center shadow-sm hover:shadow-md transition-shadow">
-            <div className="text-2xl font-bold text-gray-800">{categories.length}</div>
-            <div className="text-sm text-gray-500">{t('카테고리', 'Categories')}</div>
-          </div>
-        </div>
-
-        {/* Search and Filter Bar */}
-        <div className="bg-white rounded-2xl shadow-sm p-4 mb-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search Input */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  type="text"
-                  placeholder={t('동아리 검색...', 'Search clubs...')}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                />
+          <div className="text-center group">
+            <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 group-hover:border-green-200">
+              <div className="text-3xl font-bold text-green-600 mb-2 flex items-center justify-center">
+                {koreanClubs.filter(c => c.recruiting).length}
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse ml-2"></div>
               </div>
+              <div className="text-sm font-semibold text-gray-600">{t('모집 중', 'Recruiting')}</div>
+            </div>
+          </div>
+          <div className="text-center group">
+            <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 group-hover:border-purple-200">
+              <div className="text-3xl font-bold text-purple-600 mb-2">{categories.length}</div>
+              <div className="text-sm font-semibold text-gray-600">{t('카테고리', 'Categories')}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Enhanced Filters */}
+      <ColorfulCard className="mb-8 overflow-hidden border-0 shadow-xl">
+        <div className="bg-gradient-to-r from-blue-50 via-mint-50 to-purple-50 p-8">
+          <div className="space-y-8">
+            {/* Enhanced Search */}
+            <div>
+              <label className="block text-lg font-bold text-gray-800 mb-4">
+                <Search className="h-5 w-5 inline mr-2" />
+                {t('동아리 검색', 'Search Clubs')}
+              </label>
+              <ColorfulInput
+                placeholder={t('동아리 이름이나 설명으로 검색...', 'Search by club name or description...')}
+                icon={<Search className="h-5 w-5" />}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="text-lg h-14 shadow-lg"
+              />
             </div>
 
-            {/* Filter Controls */}
-            <div className="flex gap-2">
-              {/* Category Dropdown */}
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white cursor-pointer hover:bg-gray-50 transition-colors"
-              >
-                <option value="all">{t('모든 카테고리', 'All Categories')}</option>
-                {categories.map(category => (
-                  <option key={category} value={category}>
-                    {getCategoryIcon(category)} {category}
-                  </option>
-                ))}
-              </select>
+            {/* Enhanced Filters Row */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+              {/* Category Filter */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-3">
+                  <Filter className="h-4 w-4 inline mr-2" />
+                  {t('카테고리', 'Category')}
+                </label>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-md hover:shadow-lg transition-all font-medium"
+                >
+                  <option value="all">{t('모든 카테고리', 'All Categories')}</option>
+                  {categories.map(category => (
+                    <option key={category} value={category}>
+                      {getCategoryIcon(category)} {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-              {/* Sort Dropdown */}
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white cursor-pointer hover:bg-gray-50 transition-colors"
-              >
-                <option value="popular">⭐ {t('인기순', 'Popular')}</option>
-                <option value="name">🔤 {t('이름순', 'Name')}</option>
-                <option value="members">👥 {t('멤버수', 'Members')}</option>
-                <option value="established">📅 {t('설립순', 'Established')}</option>
-              </select>
+              {/* Sort Filter */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-3">
+                  <TrendingUp className="h-4 w-4 inline mr-2" />
+                  {t('정렬', 'Sort By')}
+                </label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-md hover:shadow-lg transition-all font-medium"
+                >
+                  <option value="popular">{t('인기순', 'Popular')}</option>
+                  <option value="name">{t('이름순', 'Name')}</option>
+                  <option value="members">{t('멤버수', 'Members')}</option>
+                  <option value="established">{t('설립년도', 'Established')}</option>
+                </select>
+              </div>
 
-              {/* Recruiting Toggle */}
-              <button
-                onClick={() => setRecruitingOnly(!recruitingOnly)}
-                className={`px-4 py-3 rounded-xl border transition-all flex items-center gap-2 ${
-                  recruitingOnly 
-                    ? 'bg-green-50 border-green-300 text-green-700' 
-                    : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <div className={`w-2 h-2 rounded-full ${recruitingOnly ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
-                <span className="hidden sm:inline">{t('모집중', 'Recruiting')}</span>
-              </button>
+              {/* Recruiting Filter */}
+              <div className="flex items-end">
+                <label className="flex items-center space-x-3 cursor-pointer bg-white px-5 py-3 rounded-xl border-2 border-gray-200 hover:bg-gray-50 hover:border-green-300 transition-all shadow-md hover:shadow-lg w-full">
+                  <input
+                    type="checkbox"
+                    checked={recruitingOnly}
+                    onChange={(e) => setRecruitingOnly(e.target.checked)}
+                    className="rounded border-gray-300 text-green-600 focus:ring-green-500 w-5 h-5"
+                  />
+                  <span className="text-sm font-bold text-gray-700">
+                    {t('모집 중만', 'Recruiting only')}
+                  </span>
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse ml-auto"></div>
+                </label>
+              </div>
 
               {/* View Mode Toggle */}
-              <div className="flex bg-gray-100 rounded-xl p-1">
-                <button
-                  onClick={() => setViewMode('cards')}
-                  className={`p-2 rounded-lg transition-all ${
-                    viewMode === 'cards' 
-                      ? 'bg-white text-blue-600 shadow-sm' 
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                  title={t('카드 보기', 'Card View')}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-3">
+                  <Eye className="h-4 w-4 inline mr-2" />
+                  {t('보기 모드', 'View Mode')}
+                </label>
+                <div className="flex bg-white rounded-xl p-1 border-2 border-gray-200 shadow-md">
+                  <button
+                    onClick={() => setViewMode('cards')}
+                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                      viewMode === 'cards'
+                        ? 'bg-gradient-primary text-white shadow-md'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    {t('카드', 'Cards')}
+                  </button>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                      viewMode === 'list'
+                        ? 'bg-gradient-primary text-white shadow-md'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    {t('목록', 'List')}
+                  </button>
+                </div>
+              </div>
+
+              {/* Clear Filters */}
+              <div className="flex items-end">
+                <ColorfulButton
+                  variant="outline"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setSelectedCategory('all');
+                    setRecruitingOnly(false);
+                    setSortBy('popular');
+                  }}
+                  className="w-full h-12 font-bold shadow-md hover:shadow-lg"
                 >
-                  <Grid3x3 className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-lg transition-all ${
-                    viewMode === 'list' 
-                      ? 'bg-white text-blue-600 shadow-sm' 
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                  title={t('목록 보기', 'List View')}
-                >
-                  <List className="h-5 w-5" />
-                </button>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  {t('초기화', 'Reset')}
+                </ColorfulButton>
               </div>
             </div>
           </div>
+        </div>
+      </ColorfulCard>
 
-          {/* Active Filters Display */}
-          {(selectedCategory !== 'all' || recruitingOnly || searchTerm) && (
-            <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
-              {selectedCategory !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">
-                  {getCategoryIcon(selectedCategory)} {selectedCategory}
-                  <button
-                    onClick={() => setSelectedCategory('all')}
-                    className="ml-1 hover:text-blue-900"
-                  >
-                    ✕
-                  </button>
-                </span>
-              )}
-              {recruitingOnly && (
-                <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  {t('모집중', 'Recruiting')}
-                  <button
-                    onClick={() => setRecruitingOnly(false)}
-                    className="ml-1 hover:text-green-900"
-                  >
-                    ✕
-                  </button>
-                </span>
-              )}
-              {searchTerm && (
-                <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-                  🔍 "{searchTerm}"
-                  <button
-                    onClick={() => setSearchTerm('')}
-                    className="ml-1 hover:text-gray-900"
-                  >
-                    ✕
-                  </button>
-                </span>
-              )}
-              <button
-                onClick={() => {
-                  setSearchTerm('');
-                  setSelectedCategory('all');
-                  setRecruitingOnly(false);
-                }}
-                className="text-sm text-gray-500 hover:text-gray-700 ml-2"
-              >
-                {t('모두 지우기', 'Clear all')}
-              </button>
+      {/* Enhanced Results Summary */}
+      <div className="mb-8 bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-3">
+              <div className="bg-gradient-primary rounded-full p-2">
+                <Filter className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <p className="text-xl font-bold text-gray-800">
+                  {t(`${filteredClubs.length}개의 동아리`, `${filteredClubs.length} clubs`)}
+                </p>
+                <p className="text-sm text-gray-500">{t('검색 결과', 'search results')}</p>
+              </div>
             </div>
-          )}
-        </div>
-
-        {/* Results Count */}
-        <div className="mb-4 text-sm text-gray-600">
-          {t(`${filteredClubs.length}개의 결과`, `${filteredClubs.length} results`)}
-        </div>
-
-        {/* Clubs Display */}
-        {filteredClubs.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
-            <div className="max-w-md mx-auto">
-              <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                {t('검색 결과가 없습니다', 'No clubs found')}
-              </h3>
-              <p className="text-gray-600 mb-6">
-                {t('다른 검색어를 시도해보세요', 'Try different search terms')}
-              </p>
-              <button
-                onClick={() => {
-                  setSearchTerm('');
-                  setSelectedCategory('all');
-                  setRecruitingOnly(false);
-                }}
-                className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
-              >
-                {t('필터 초기화', 'Reset Filters')}
-              </button>
+            
+            <div className="flex items-center space-x-4 text-sm">
+              <div className="flex items-center space-x-2 bg-green-50 px-4 py-2 rounded-full border border-green-200">
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="font-bold text-green-700">{filteredClubs.filter(club => club.recruiting).length}</span>
+                <span className="text-green-600">{t('모집 중', 'recruiting')}</span>
+              </div>
+              <div className="flex items-center space-x-2 bg-blue-50 px-4 py-2 rounded-full border border-blue-200">
+                <Award className="h-4 w-4 text-blue-600" />
+                <span className="font-bold text-blue-700">{filteredClubs.filter(club => club.established < 2020).length}</span>
+                <span className="text-blue-600">{t('전통 동아리', 'established')}</span>
+              </div>
             </div>
           </div>
-        ) : viewMode === 'cards' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredClubs.map((club) => {
-              const clubName = language === 'ko' ? club.name.ko : club.name.en;
-              const clubDescription = language === 'ko' ? club.description.ko : club.description.en;
-              const categoryName = getCategoryName(club.category);
+        </div>
+      </div>
 
-              return (
-                <div
-                  key={club.id}
-                  className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group"
-                >
-                  {/* Club Image */}
-                  <div className="relative h-48 overflow-hidden">
-                    <img
-                      src={club.image}
-                      alt={clubName}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    
-                    {/* Category Badge */}
-                    <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-white text-xs font-semibold bg-gradient-to-r ${getCategoryColor(categoryName)} shadow-lg`}>
-                      {getCategoryIcon(categoryName)} {categoryName}
-                    </div>
-
-                    {/* Recruiting Badge */}
-                    {club.recruiting && (
-                      <div className="absolute top-3 right-3 px-3 py-1 bg-green-500 text-white rounded-full text-xs font-semibold flex items-center gap-1 shadow-lg animate-pulse">
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
-                        {t('모집중', 'Open')}
-                      </div>
-                    )}
-
-                    {/* Club Name Overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <h3 className="text-xl font-bold text-white mb-1">
-                        {clubName}
-                      </h3>
-                      <div className="flex items-center gap-3 text-white/90 text-sm">
-                        <span className="flex items-center gap-1">
-                          <Users className="h-4 w-4" />
-                          {club.memberCount}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          {club.established}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Club Content */}
-                  <div className="p-5">
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                      {clubDescription}
-                    </p>
-
-                    {/* Activities Tags */}
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {club.activities.slice(0, 3).map((activity, index) => (
-                        <span
-                          key={index}
-                          className="px-2 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs"
-                        >
-                          {language === 'ko' ? activity.ko : activity.en}
-                        </span>
-                      ))}
-                      {club.activities.length > 3 && (
-                        <span className="px-2 py-1 bg-gray-100 text-gray-500 rounded-lg text-xs">
-                          +{club.activities.length - 3}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-2">
-                      <Link to={`/club/${club.id}`} className="flex-1">
-                        <button className="w-full px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all font-medium">
-                          {t('자세히 보기', 'View Details')}
-                        </button>
-                      </Link>
-                      <button className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-                        <Heart className="h-5 w-5 text-gray-400 hover:text-red-500 transition-colors" />
-                      </button>
-                      <button className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-                        <Bookmark className="h-5 w-5 text-gray-400 hover:text-blue-500 transition-colors" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+      {/* Enhanced Clubs Display */}
+      {filteredClubs.length === 0 ? (
+        <ColorfulCard className="text-center p-16 border-0 shadow-xl">
+          <div className="max-w-md mx-auto">
+            <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-full p-8 w-32 h-32 mx-auto mb-8 flex items-center justify-center shadow-inner">
+              <Filter className="h-16 w-16 text-gray-400" />
+            </div>
+            <h2 className="text-3xl font-bold text-gray-800 mb-4">
+              {t('검색 결과가 없습니다', 'No clubs found')}
+            </h2>
+            <p className="text-gray-600 mb-8 text-lg leading-relaxed">
+              {t('검색 조건을 조정하거나 다른 키워드로 시도해보세요', 'Try adjusting your search criteria or using different keywords')}
+            </p>
+            <ColorfulButton
+              size="lg"
+              onClick={() => {
+                setSearchTerm('');
+                setSelectedCategory('all');
+                setRecruitingOnly(false);
+                setSortBy('popular');
+              }}
+              className="shadow-lg hover:shadow-xl"
+            >
+              <Sparkles className="h-5 w-5 mr-2" />
+              {t('모든 동아리 보기', 'Show All Clubs')}
+            </ColorfulButton>
           </div>
-        ) : (
-          // List View
-          <div className="space-y-4">
-            {filteredClubs.map((club) => {
-              const clubName = language === 'ko' ? club.name.ko : club.name.en;
-              const clubDescription = language === 'ko' ? club.description.ko : club.description.en;
-              const categoryName = getCategoryName(club.category);
+        </ColorfulCard>
+      ) : (
+        <div className={viewMode === 'cards' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8' : 'space-y-6'}>
+          {filteredClubs.map((club) => {
+            const clubName = language === 'ko' ? club.name.ko : club.name.en;
+            const clubDescription = language === 'ko' ? club.description.ko : club.description.en;
+            const categoryName = getCategoryName(club.category);
 
+            if (viewMode === 'list') {
               return (
-                <div
-                  key={club.id}
-                  className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 p-6"
-                >
-                  <div className="flex gap-6">
-                    {/* Club Image */}
-                    <div className="relative w-32 h-32 rounded-xl overflow-hidden flex-shrink-0">
+                <ColorfulCard key={club.id} className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-0 bg-white">
+                  <div className="flex">
+                    {/* Image Section */}
+                    <div className="relative w-48 h-32 flex-shrink-0">
                       <img
                         src={club.image}
                         alt={clubName}
                         className="w-full h-full object-cover"
                       />
-                      {club.recruiting && (
-                        <div className="absolute top-2 right-2 w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-lg"></div>
-                      )}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/20" />
+                      
+                      {/* Status Badges */}
+                      <div className="absolute top-2 left-2 flex flex-col space-y-1">
+                        {club.recruiting && (
+                          <div className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold animate-pulse">
+                            {t('모집중', 'Recruiting')}
+                          </div>
+                        )}
+                        {club.established < 2010 && (
+                          <div className="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                            {t('전통', 'Legacy')}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Club Info */}
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-xl font-bold text-gray-800">
+                    {/* Content Section */}
+                    <div className="flex-1 p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <h3 className="text-xl font-bold text-gray-800 group-hover:text-mint-600 transition-colors">
                               {clubName}
                             </h3>
-                            <span className={`px-3 py-1 rounded-full text-white text-xs font-semibold bg-gradient-to-r ${getCategoryColor(categoryName)}`}>
-                              {getCategoryIcon(categoryName)} {categoryName}
-                            </span>
-                            {club.recruiting && (
-                              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
-                                {t('모집중', 'Recruiting')}
-                              </span>
-                            )}
+                            <div className={`px-3 py-1 rounded-full text-xs font-bold ${getCategoryColor(categoryName)}`}>
+                              <span className="mr-1">{getCategoryIcon(categoryName)}</span>
+                              {categoryName}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
-                            <span className="flex items-center gap-1">
-                              <Users className="h-4 w-4" />
-                              {club.memberCount} {t('명', 'members')}
-                            </span>
-                            <span className="flex items-center gap-1">
+                          
+                          <p className="text-gray-600 text-sm line-clamp-2 mb-3">
+                            {clubDescription}
+                          </p>
+                          
+                          <div className="flex items-center space-x-4 text-sm text-gray-500">
+                            <div className="flex items-center space-x-1">
                               <Calendar className="h-4 w-4" />
-                              {t(`${club.established}년 설립`, `Est. ${club.established}`)}
-                            </span>
+                              <span>{t(`${club.established}년`, `Est. ${club.established}`)}</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <Users className="h-4 w-4" />
+                              <span>{club.memberCount.toLocaleString()}</span>
+                            </div>
                             {club.country && (
-                              <span className="flex items-center gap-1">
+                              <div className="flex items-center space-x-1">
                                 <Globe className="h-4 w-4" />
-                                {club.country}
-                              </span>
+                                <span>{club.country}</span>
+                              </div>
                             )}
                           </div>
                         </div>
-                        
-                        {/* Quick Actions */}
-                        <div className="flex gap-2">
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center space-x-2 ml-4">
                           <Link to={`/club/${club.id}`}>
-                            <button className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium">
-                              {t('상세보기', 'Details')}
-                            </button>
+                            <ColorfulButton size="sm" className="whitespace-nowrap">
+                              {t('자세히', 'Details')}
+                            </ColorfulButton>
                           </Link>
                         </div>
                       </div>
 
-                      <p className="text-gray-600 mb-3 line-clamp-2">
-                        {clubDescription}
-                      </p>
+                      {/* Interaction Buttons */}
+                      <ClubInteractionButtons
+                        clubId={club.id}
+                        clubName={clubName}
+                        recruiting={club.recruiting}
+                        showCounts={false}
+                        className="justify-start"
+                      />
+                    </div>
+                  </div>
+                </ColorfulCard>
+              );
+            }
 
-                      {/* Activities */}
-                      <div className="flex flex-wrap gap-2">
-                        {club.activities.slice(0, 5).map((activity, index) => (
-                          <span
-                            key={index}
-                            className="px-3 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs"
-                          >
-                            {language === 'ko' ? activity.ko : activity.en}
-                          </span>
-                        ))}
-                        {club.activities.length > 5 && (
-                          <span className="px-3 py-1 bg-gray-100 text-gray-500 rounded-lg text-xs">
-                            +{club.activities.length - 5} {t('더', 'more')}
-                          </span>
-                        )}
+            // Card View
+            return (
+              <ColorfulCard key={club.id} className="group overflow-hidden hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border-0 bg-white">
+                <div className="relative h-64 overflow-hidden">
+                  <img
+                    src={club.image}
+                    alt={clubName}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  
+                  {/* Enhanced Badges */}
+                  <div className="absolute top-4 left-4 flex flex-col space-y-2">
+                    {club.recruiting && (
+                      <div className="flex items-center space-x-2 bg-green-500 text-white px-3 py-2 rounded-full text-sm font-bold shadow-xl animate-pulse">
+                        <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
+                        <span>{t('모집중', 'Recruiting')}</span>
                       </div>
+                    )}
+                    {club.established < 2010 && (
+                      <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-2 rounded-full text-sm font-bold shadow-xl">
+                        <Award className="h-4 w-4 inline mr-1" />
+                        {t('전통', 'Legacy')}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Enhanced Category Badge */}
+                  <div className="absolute top-4 right-4">
+                    <div className={`px-4 py-2 rounded-full text-sm font-bold shadow-xl border backdrop-blur-sm ${getCategoryColor(categoryName)} bg-white/95`}>
+                      <span className="mr-2">{getCategoryIcon(categoryName)}</span>
+                      {categoryName}
+                    </div>
+                  </div>
+
+                  {/* Enhanced Club Info Overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 p-6">
+                    <h3 className="text-2xl font-bold text-white group-hover:text-mint-200 transition-colors mb-3">
+                      {clubName}
+                    </h3>
+                    <div className="flex flex-wrap items-center gap-4 text-blue-200 text-sm">
+                      <div className="flex items-center space-x-1 bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm">
+                        <Calendar className="h-4 w-4" />
+                        <span className="font-semibold">{t(`${club.established}년`, `Est. ${club.established}`)}</span>
+                      </div>
+                      <div className="flex items-center space-x-1 bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm">
+                        <Users className="h-4 w-4" />
+                        <span className="font-semibold">{club.memberCount.toLocaleString()}</span>
+                      </div>
+                      {club.country && (
+                        <div className="flex items-center space-x-1 bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm">
+                          <Globe className="h-4 w-4" />
+                          <span className="font-semibold">{club.country}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
 
-        {/* Load More */}
-        {filteredClubs.length > 0 && filteredClubs.length >= 9 && (
-          <div className="text-center mt-12">
-            <button className="px-8 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium">
-              {t('더 보기', 'Load More')}
-            </button>
+                <div className="p-6 space-y-6">
+                  {/* Enhanced Description */}
+                  <div>
+                    <p className="text-gray-700 leading-relaxed line-clamp-3 text-sm">
+                      {clubDescription}
+                    </p>
+                  </div>
+
+                  {/* Enhanced Officers Section */}
+                  <div>
+                    <h4 className="font-bold text-gray-800 mb-3 flex items-center text-sm">
+                      <Star className="h-4 w-4 mr-2 text-yellow-500" />
+                      {t('주요 임원', 'Key Officers')}
+                    </h4>
+                    <div className="space-y-2">
+                      {club.officers.slice(0, 2).map((officer, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-mint-50 rounded-xl border border-gray-100 hover:shadow-md transition-all">
+                          <span className="text-gray-800 font-semibold text-sm">
+                            {language === 'ko' ? officer.name.ko : officer.name.en}
+                          </span>
+                          <span className="text-blue-600 font-bold text-xs bg-blue-100 px-3 py-1 rounded-full border border-blue-200">
+                            {language === 'ko' ? officer.role.ko : officer.role.en}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Enhanced Activities */}
+                  <div>
+                    <h4 className="font-bold text-gray-800 mb-3 text-sm">
+                      {t('주요 활동', 'Main Activities')}
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {club.activities.slice(0, 4).map((activity, index) => (
+                        <span
+                          key={index}
+                          className="px-3 py-2 bg-gradient-to-r from-mint-100 to-blue-100 text-mint-800 rounded-full text-xs font-bold border border-mint-200 hover:shadow-md hover:scale-105 transition-all cursor-default"
+                        >
+                          {language === 'ko' ? activity.ko : activity.en}
+                        </span>
+                      ))}
+                      {club.activities.length > 4 && (
+                        <span className="px-3 py-2 bg-gray-100 text-gray-600 rounded-full text-xs font-bold border border-gray-200 hover:bg-gray-200 transition-colors cursor-default">
+                          +{club.activities.length - 4} {t('더', 'more')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Enhanced Club Actions */}
+                  <div className="border-t pt-6 space-y-4">
+                    {/* Interaction Buttons */}
+                    <ClubInteractionButtons
+                      clubId={club.id}
+                      clubName={clubName}
+                      recruiting={club.recruiting}
+                      showCounts={true}
+                      className="mb-4"
+                    />
+
+                    {/* Enhanced Bottom Row: View Details */}
+                    <div className="flex items-center">
+                      <Link to={`/club/${club.id}`} className="flex-1">
+                        <ColorfulButton className="w-full group-hover:shadow-lg transition-shadow font-bold">
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          {t('자세히 보기', 'View Details')}
+                        </ColorfulButton>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </ColorfulCard>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Enhanced Load More Button */}
+      {filteredClubs.length > 0 && (
+        <div className="text-center mt-16">
+          <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 max-w-md mx-auto">
+            <div className="mb-6">
+              <div className="bg-gradient-primary rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <TrendingUp className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">
+                {t('더 많은 동아리가 있어요!', 'More clubs available!')}
+              </h3>
+              <p className="text-gray-600 text-sm">
+                {t('계속 탐색해보세요', 'Keep exploring')}
+              </p>
+            </div>
+            <ColorfulButton size="lg" className="shadow-lg hover:shadow-xl font-bold">
+              <Sparkles className="h-5 w-5 mr-2" />
+              {t('더 많은 동아리 탐색', 'Explore More Clubs')}
+            </ColorfulButton>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

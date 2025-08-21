@@ -45,15 +45,6 @@ export interface KoreanClub {
     kakao?: string;
     website?: string;
   };
-  contact?: {
-    email?: string;
-    phone?: string;
-    kakao?: string;
-  };
-  meetingSchedule?: {
-    ko: string;
-    en: string;
-  };
 }
 
 export const koreanClubs: KoreanClub[] = [
@@ -103,15 +94,7 @@ export const koreanClubs: KoreanClub[] = [
       en: 'Korean university societies emphasize senior-junior relationships. New students are called "saenaegi" and seniors act as mentors.'
     },
     image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=300&fit=crop',
-    pastEvents: ['1', '3'],
-    contact: {
-      email: 'contact@cs-society.ac.kr',
-      phone: '+82-2-1234-5678'
-    },
-    meetingSchedule: {
-      ko: '매주 화요일 오후 6시',
-      en: 'Every Tuesday at 6 PM'
-    }
+    pastEvents: ['1', '3']
   },
   {
     id: '2',
@@ -154,14 +137,7 @@ export const koreanClubs: KoreanClub[] = [
       en: 'This club emphasizes equality over hierarchy. All members learn from and teach each other.'
     },
     image: 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=400&h=300&fit=crop',
-    pastEvents: ['4'],
-    contact: {
-      email: 'contact@international-club.ac.kr'
-    },
-    meetingSchedule: {
-      ko: '매주 금요일 오후 7시',
-      en: 'Every Friday at 7 PM'
-    }
+    pastEvents: ['4']
   },
   // International Student Associations
   {
@@ -219,13 +195,6 @@ export const koreanClubs: KoreanClub[] = [
       instagram: '@csa_korea',
       kakao: 'CSAKorea',
       website: 'https://csa-korea.org'
-    },
-    contact: {
-      email: 'info@csa-korea.org'
-    },
-    meetingSchedule: {
-      ko: '매월 첫째 주 토요일 오후 2시',
-      en: 'First Saturday of every month at 2 PM'
     }
   },
   {
@@ -277,13 +246,6 @@ export const koreanClubs: KoreanClub[] = [
       facebook: 'VSAKorea',
       instagram: '@vsa_korea',
       kakao: 'VSAKorea'
-    },
-    contact: {
-      email: 'info@vsa-korea.org'
-    },
-    meetingSchedule: {
-      ko: '매주 일요일 오후 3시',
-      en: 'Every Sunday at 3 PM'
     }
   },
   {
@@ -335,9 +297,6 @@ export const koreanClubs: KoreanClub[] = [
       facebook: 'ISAKorea',
       instagram: '@isa_korea',
       website: 'https://isa-korea.org'
-    },
-    contact: {
-      email: 'info@isa-korea.org'
     }
   },
   {
@@ -389,13 +348,6 @@ export const koreanClubs: KoreanClub[] = [
       facebook: 'IndianStudentsKorea',
       instagram: '@indian_students_korea',
       website: 'https://isa-korea.in'
-    },
-    contact: {
-      email: 'info@isa-korea.in'
-    },
-    meetingSchedule: {
-      ko: '매월 둘째 주 토요일 오후 4시',
-      en: 'Second Saturday of every month at 4 PM'
     }
   },
   {
@@ -446,9 +398,6 @@ export const koreanClubs: KoreanClub[] = [
     socialMedia: {
       facebook: 'TSAKorea',
       instagram: '@tsa_korea'
-    },
-    contact: {
-      email: 'info@tsa-korea.org'
     }
   },
   {
@@ -499,13 +448,6 @@ export const koreanClubs: KoreanClub[] = [
     socialMedia: {
       facebook: 'FSAKorea',
       instagram: '@fsa_korea'
-    },
-    contact: {
-      email: 'info@fsa-korea.org'
-    },
-    meetingSchedule: {
-      ko: '매월 셋째 주 일요일 오후 2시',
-      en: 'Third Sunday of every month at 2 PM'
     }
   },
   {
@@ -556,9 +498,6 @@ export const koreanClubs: KoreanClub[] = [
     socialMedia: {
       facebook: 'MSAKorea',
       instagram: '@msa_korea'
-    },
-    contact: {
-      email: 'info@msa-korea.org'
     }
   },
   {
@@ -609,13 +548,6 @@ export const koreanClubs: KoreanClub[] = [
     socialMedia: {
       facebook: 'JSAKorea',
       instagram: '@jsa_korea'
-    },
-    contact: {
-      email: 'info@jsa-korea.org'
-    },
-    meetingSchedule: {
-      ko: '매주 수요일 오후 5시',
-      en: 'Every Wednesday at 5 PM'
     }
   },
   {
@@ -666,9 +598,6 @@ export const koreanClubs: KoreanClub[] = [
     socialMedia: {
       facebook: 'MongolianStudentsKorea',
       instagram: '@mongolian_students_korea'
-    },
-    contact: {
-      email: 'info@msa-korea.mn'
     }
   },
   {
@@ -720,13 +649,6 @@ export const koreanClubs: KoreanClub[] = [
       facebook: 'ASAKorea',
       instagram: '@asa_korea',
       website: 'https://asa-korea.org'
-    },
-    contact: {
-      email: 'info@asa-korea.org'
-    },
-    meetingSchedule: {
-      ko: '매월 마지막 금요일 오후 6시',
-      en: 'Last Friday of every month at 6 PM'
     }
   }
 ];

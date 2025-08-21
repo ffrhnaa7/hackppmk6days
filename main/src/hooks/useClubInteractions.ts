@@ -13,15 +13,6 @@ interface ClubInteractions {
   applicationsCount: number;
 }
 
-/**
- * Custom hook for managing club interactions
- * 
- * Handles all user interactions with a club including saving, liking,
- * applying, and sharing. Provides optimistic updates and error handling.
- * 
- * @param clubId - The ID of the club to interact with
- * @returns Object containing interaction states and methods
- */
 export const useClubInteractions = (clubId: string) => {
   const { user } = useAuth();
   const [interactions, setInteractions] = useState<ClubInteractions>({
@@ -35,17 +26,13 @@ export const useClubInteractions = (clubId: string) => {
     applicationsCount: 0
   });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Load interaction data from the database
-   */
   const loadInteractions = useCallback(async () => {
     if (!clubId) return;
     
     try {
       setLoading(true);
-      setError(null);
+      console.log('Loading interactions for club:', clubId, 'user:', user?.id);
 
       // Get interaction counts - this should work for everyone
       const { data: counts, error: countsError } = await supabase
@@ -53,7 +40,6 @@ export const useClubInteractions = (clubId: string) => {
 
       if (countsError) {
         console.error('Error loading counts:', countsError);
-        setError(countsError.message);
       }
 
       const countsData = counts?.[0] || { 
@@ -62,6 +48,7 @@ export const useClubInteractions = (clubId: string) => {
         hearts_count: 0, 
         shares_count: 0 
       };
+      console.log('Counts data:', countsData);
 
       let userInteractions = { 
         has_applied: false, 
@@ -81,7 +68,13 @@ export const useClubInteractions = (clubId: string) => {
         if (userError) {
           console.error('Error loading user interactions:', userError);
         } else {
-          userInteractions = userData?.[0] || userInteractions;
+          userInteractions = userData?.[0] || { 
+            has_applied: false, 
+            application_status: 'none', 
+            is_saved: false, 
+            is_hearted: false 
+          };
+          console.log('User interactions:', userInteractions);
         }
       }
 
@@ -97,7 +90,6 @@ export const useClubInteractions = (clubId: string) => {
       });
     } catch (error) {
       console.error('Error loading club interactions:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load interactions');
     } finally {
       setLoading(false);
     }
@@ -107,26 +99,15 @@ export const useClubInteractions = (clubId: string) => {
     loadInteractions();
   }, [loadInteractions]);
 
-  /**
-   * Apply to join the club
-   */
   const applyToClub = useCallback(async (applicationMessage?: string) => {
     if (!user || !clubId) {
-      setError('User not authenticated or no club ID');
+      console.log('User not authenticated or no club ID');
       return;
     }
 
-    try {
-      setError(null);
-      
-      // Optimistic update
-      setInteractions(prev => ({
-        ...prev,
-        hasApplied: true,
-        applicationStatus: 'pending',
-        applicationsCount: prev.applicationsCount + 1
-      }));
+    console.log('Applying to club:', clubId, 'with message:', applicationMessage);
 
+    try {
       const { error } = await supabase
         .from('club_applications')
         .insert({
@@ -137,213 +118,196 @@ export const useClubInteractions = (clubId: string) => {
         });
 
       if (error) {
-        // Revert optimistic update
-        setInteractions(prev => ({
-          ...prev,
-          hasApplied: false,
-          applicationStatus: 'none',
-          applicationsCount: Math.max(0, prev.applicationsCount - 1)
-        }));
-        throw error;
+        console.error('Error applying to club:', error);
+        return;
       }
+
+      console.log('Successfully applied to club');
+      setInteractions(prev => ({
+        ...prev,
+        hasApplied: true,
+        applicationStatus: 'pending',
+        applicationsCount: prev.applicationsCount + 1
+      }));
     } catch (error) {
       console.error('Error applying to club:', error);
-      setError(error instanceof Error ? error.message : 'Failed to apply');
-      throw error;
     }
   }, [user, clubId]);
 
-  /**
-   * Withdraw application from the club
-   */
   const withdrawApplication = useCallback(async () => {
     if (!user || !clubId) {
-      setError('User not authenticated or no club ID');
+      console.log('User not authenticated or no club ID');
       return;
     }
 
+    console.log('Withdrawing application for club:', clubId);
+
     try {
-      setError(null);
-      
       const { error } = await supabase
         .from('club_applications')
         .update({ status: 'withdrawn' })
         .eq('user_id', user.id)
         .eq('club_id', clubId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error withdrawing application:', error);
+        return;
+      }
 
+      console.log('Successfully withdrew application');
       setInteractions(prev => ({
         ...prev,
         applicationStatus: 'withdrawn'
       }));
     } catch (error) {
       console.error('Error withdrawing application:', error);
-      setError(error instanceof Error ? error.message : 'Failed to withdraw');
-      throw error;
     }
   }, [user, clubId]);
 
-  /**
-   * Toggle saved status for the club
-   */
   const toggleSaved = useCallback(async () => {
     if (!user || !clubId) {
-      setError('User not authenticated or no club ID');
+      console.log('User not authenticated or no club ID');
       return;
     }
 
+    console.log('Toggling saved for club:', clubId, 'current state:', interactions.isSaved);
+
     try {
-      setError(null);
-      const newSavedState = !interactions.isSaved;
-      
-      // Optimistic update
-      setInteractions(prev => ({
-        ...prev,
-        isSaved: newSavedState,
-        savedCount: newSavedState 
-          ? prev.savedCount + 1 
-          : Math.max(0, prev.savedCount - 1)
-      }));
-
-      if (newSavedState) {
-        const { error } = await supabase
-          .from('saved_clubs')
-          .insert({
-            user_id: user.id,
-            club_id: clubId
-          });
-
-        if (error) throw error;
-      } else {
+      if (interactions.isSaved) {
+        // Remove from saved
         const { error } = await supabase
           .from('saved_clubs')
           .delete()
           .eq('user_id', user.id)
           .eq('club_id', clubId);
 
-        if (error) throw error;
-      }
-    } catch (error) {
-      // Revert optimistic update
-      setInteractions(prev => ({
-        ...prev,
-        isSaved: !prev.isSaved,
-        savedCount: prev.isSaved 
-          ? Math.max(0, prev.savedCount - 1)
-          : prev.savedCount + 1
-      }));
-      console.error('Error toggling saved club:', error);
-      setError(error instanceof Error ? error.message : 'Failed to save');
-    }
-  }, [user, clubId, interactions.isSaved]);
+        if (error) {
+          console.error('Error removing saved club:', error);
+          return;
+        }
 
-  /**
-   * Toggle heart/like status for the club
-   */
-  const toggleHeart = useCallback(async () => {
-    if (!user || !clubId) {
-      setError('User not authenticated or no club ID');
-      return;
-    }
-
-    try {
-      setError(null);
-      const newHeartState = !interactions.isHearted;
-      
-      // Optimistic update
-      setInteractions(prev => ({
-        ...prev,
-        isHearted: newHeartState,
-        heartsCount: newHeartState 
-          ? prev.heartsCount + 1 
-          : Math.max(0, prev.heartsCount - 1)
-      }));
-
-      if (newHeartState) {
+        console.log('Successfully removed from saved');
+        setInteractions(prev => ({
+          ...prev,
+          isSaved: false,
+          savedCount: Math.max(0, prev.savedCount - 1)
+        }));
+      } else {
+        // Add to saved
         const { error } = await supabase
-          .from('club_hearts')
+          .from('saved_clubs')
           .insert({
             user_id: user.id,
             club_id: clubId
-          });
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('club_hearts')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('club_id', clubId);
-
-        if (error) throw error;
-      }
-    } catch (error) {
-      // Revert optimistic update
-      setInteractions(prev => ({
-        ...prev,
-        isHearted: !prev.isHearted,
-        heartsCount: prev.isHearted 
-          ? Math.max(0, prev.heartsCount - 1)
-          : prev.heartsCount + 1
-      }));
-      console.error('Error toggling club heart:', error);
-      setError(error instanceof Error ? error.message : 'Failed to like');
-    }
-  }, [user, clubId, interactions.isHearted]);
-
-  /**
-   * Share the club
-   */
-  const shareClub = useCallback(async (shareType: 'link' | 'email' | 'social' = 'link') => {
-    if (!clubId) return;
-
-    try {
-      setError(null);
-      
-      // Track share even for non-authenticated users
-      if (user) {
-        const { error } = await supabase
-          .from('club_shares')
-          .insert({
-            user_id: user.id,
-            club_id: clubId,
-            share_type: shareType
           });
 
         if (error) {
-          console.error('Error tracking share:', error);
+          console.error('Error adding saved club:', error);
+          return;
         }
+
+        console.log('Successfully added to saved');
+        setInteractions(prev => ({
+          ...prev,
+          isSaved: true,
+          savedCount: prev.savedCount + 1
+        }));
+      }
+    } catch (error) {
+      console.error('Error toggling saved club:', error);
+    }
+  }, [user, clubId, interactions.isSaved]);
+
+  const toggleHeart = useCallback(async () => {
+    if (!user || !clubId) {
+      console.log('User not authenticated or no club ID');
+      return;
+    }
+
+    console.log('Toggling heart for club:', clubId, 'current state:', interactions.isHearted);
+
+    try {
+      if (interactions.isHearted) {
+        // Remove heart
+        const { error } = await supabase
+          .from('club_hearts')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('club_id', clubId);
+
+        if (error) {
+          console.error('Error removing club heart:', error);
+          return;
+        }
+
+        console.log('Successfully removed heart');
+        setInteractions(prev => ({
+          ...prev,
+          isHearted: false,
+          heartsCount: Math.max(0, prev.heartsCount - 1)
+        }));
+      } else {
+        // Add heart
+        const { error } = await supabase
+          .from('club_hearts')
+          .insert({
+            user_id: user.id,
+            club_id: clubId
+          });
+
+        if (error) {
+          console.error('Error adding club heart:', error);
+          return;
+        }
+
+        console.log('Successfully added heart');
+        setInteractions(prev => ({
+          ...prev,
+          isHearted: true,
+          heartsCount: prev.heartsCount + 1
+        }));
+      }
+    } catch (error) {
+      console.error('Error toggling club heart:', error);
+    }
+  }, [user, clubId, interactions.isHearted]);
+
+  const shareClub = useCallback(async (shareType: 'link' | 'email' | 'social' = 'link') => {
+    if (!user || !clubId) {
+      console.log('User not authenticated or no club ID');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('club_shares')
+        .insert({
+          user_id: user.id,
+          club_id: clubId,
+          share_type: shareType
+        });
+
+      if (error) {
+        console.error('Error sharing club:', error);
+        return;
       }
 
       setInteractions(prev => ({
         ...prev,
         sharesCount: prev.sharesCount + 1
       }));
-
-      // Handle actual sharing
-      if (shareType === 'link' && navigator.share) {
-        await navigator.share({
-          title: 'Check out this club!',
-          url: window.location.href
-        });
-      }
     } catch (error) {
       console.error('Error sharing club:', error);
-      setError(error instanceof Error ? error.message : 'Failed to share');
     }
-  }, [clubId, user]);
+  }, [user, clubId]);
 
-  // ✅ Return all values and functions
   return {
     interactions,
     loading,
-    error,
     applyToClub,
     withdrawApplication,
     toggleSaved,
     toggleHeart,
-    shareClub,
-    reload: loadInteractions
+    shareClub
   };
 };

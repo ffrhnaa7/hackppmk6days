@@ -1,378 +1,283 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { 
-  Menu, 
-  X, 
-  Home, 
-  Users, 
-  Calendar, 
-  User, 
-  LogOut, 
-  Globe,
-  UserPlus,
-  Bookmark,
-  Heart,
-  ChevronDown,
-  LucideIcon
-} from 'lucide-react';
-import { ColorfulButton } from './ColorfulButton';
-import { useLanguage } from '../contexts/LanguageContext';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, Home, Users, Calendar, User, Globe, LogOut, Settings, Bell, Search, Sparkles, Zap, Heart, Bookmark, FileText } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-
-interface NavItem {
-  path: string;
-  icon: LucideIcon;
-  label: string;
-}
-
-interface ProfileMenuItem {
-  path?: string;
-  icon?: LucideIcon;
-  label: string;
-  type?: 'divider';
-}
+import { useLanguage } from '../contexts/LanguageContext';
 
 export const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const { language, toggleLanguage, t } = useLanguage();
-  const { user, signOut } = useAuth();
+  const [scrolled, setScrolled] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const location = useLocation();
-  const languageRef = useRef<HTMLDivElement>(null);
-  const profileRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
 
-  const isActive = (path: string) => location.pathname === path;
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const navItems = [
+    { path: '/', label: t('홈', 'Home'), icon: <Home className="h-4 w-4" /> },
+    { path: '/clubs', label: t('동아리', 'Clubs'), icon: <Users className="h-4 w-4" /> },
+    { path: '/events', label: t('이벤트', 'Events'), icon: <Calendar className="h-4 w-4" /> },
+  ];
+
+  const userMenuItems = [
+    { path: '/profile', label: t('프로필', 'Profile'), icon: <User className="h-4 w-4" /> },
+    { path: '/my-applications', label: t('내 신청', 'My Applications'), icon: <FileText className="h-4 w-4" /> },
+    { path: '/saved-clubs', label: t('저장한 동아리', 'Saved Clubs'), icon: <Bookmark className="h-4 w-4" /> },
+    { path: '/liked-clubs', label: t('좋아한 동아리', 'Liked Clubs'), icon: <Heart className="h-4 w-4" /> },
+  ];
 
   const handleSignOut = async () => {
     await signOut();
-    setIsOpen(false);
-    setIsProfileOpen(false);
+    navigate('/');
   };
 
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (languageRef.current && !languageRef.current.contains(event.target as Node)) {
-        setIsLanguageOpen(false);
-      }
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-        setIsProfileOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const navItems: NavItem[] = [
-    { path: '/', icon: Home, label: t('홈', 'Home') },
-    { path: '/clubs', icon: Users, label: t('동아리', 'Clubs') },
-    { path: '/events', icon: Calendar, label: t('이벤트', 'Events') },
+  const notifications = [
+    { id: 1, text: t('새로운 이벤트가 등록되었습니다', 'New event has been registered'), time: '5분 전' },
+    { id: 2, text: t('동아리 신청이 승인되었습니다', 'Your club application was approved'), time: '1시간 전' },
+    { id: 3, text: t('내일 이벤트가 있습니다', 'You have an event tomorrow'), time: '3시간 전' },
   ];
-
-  const profileMenuItems: ProfileMenuItem[] = user ? [
-    { path: '/profile', icon: User, label: t('내 프로필', 'My Profile') },
-    { path: '/my-applications', icon: UserPlus, label: t('내 지원 현황', 'My Applications') },
-    { 
-      type: 'divider',
-      label: t('저장된 항목', 'Saved Items')
-    },
-    { path: '/saved-clubs', icon: Bookmark, label: t('저장된 동아리', 'Saved Clubs') },
-    { path: '/liked-clubs', icon: Heart, label: t('좋아요한 동아리', 'Liked Clubs') },
-  ] : [];
-
-  const languageOptions = [
-    { code: 'ko', label: '한국어', flag: '🇰🇷' },
-    { code: 'en', label: 'English', flag: '🇺🇸' }
-  ];
-
-  const currentLanguage = languageOptions.find(lang => lang.code === language);
 
   return (
-    <nav className="bg-white shadow-lg sticky top-0 z-50 border-b border-gray-100">
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      scrolled 
+        ? 'bg-white/80 backdrop-blur-2xl shadow-2xl border-b border-white/50' 
+        : 'bg-gradient-to-r from-mint-500/95 via-ocean-500/95 to-sage-500/95 backdrop-blur-xl'
+    }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-3 group">
-              <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
-                <span className="text-white font-bold text-lg">6D</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                  6DAYS
+          <Link to="/" className="flex items-center space-x-3 group">
+            <div className={`relative p-3 rounded-2xl transition-all duration-300 ${
+              scrolled 
+                ? 'bg-gradient-to-br from-mint-500 to-ocean-500 shadow-lg group-hover:shadow-xl' 
+                : 'bg-white/20 backdrop-blur-sm group-hover:bg-white/30'
+            }`}>
+              <Zap className={`h-7 w-7 ${scrolled ? 'text-white' : 'text-white'}`} />
+              <div className="absolute -top-1 -right-1">
+                <span className="flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-mint-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-mint-500"></span>
                 </span>
-                <span className="text-xs text-gray-500 font-medium">
-                  {t('더 나은 일상을 위해', 'For Better Living')}
-                </span>
               </div>
-            </Link>
-          </div>
+            </div>
+            <div>
+              <h1 className={`text-2xl font-bold tracking-tight ${
+                scrolled ? 'text-gradient' : 'text-white'
+              }`}>
+                6DAYS
+              </h1>
+              <p className={`text-xs font-medium ${
+                scrolled ? 'text-gray-500' : 'text-white/80'
+              }`}>
+                {t('라이프스타일 플랫폼', 'Lifestyle Platform')}
+              </p>
+            </div>
+          </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-2">
-            {navItems.map(({ path, icon: Icon, label }) => (
+            {navItems.map((item) => (
               <Link
-                key={path}
-                to={path}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  isActive(path)
-                    ? 'bg-gradient-primary text-white shadow-lg transform scale-105'
-                    : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
+                key={item.path}
+                to={item.path}
+                className={`flex items-center space-x-2 px-5 py-2.5 rounded-2xl font-medium transition-all duration-300 ${
+                  location.pathname === item.path
+                    ? scrolled 
+                      ? 'nav-link-active' 
+                      : 'bg-white/20 text-white shadow-lg backdrop-blur-sm'
+                    : scrolled
+                      ? 'text-gray-600 hover:text-mint-600 hover:bg-mint-50'
+                      : 'text-white/80 hover:text-white hover:bg-white/10'
                 }`}
               >
-                <Icon className="h-4 w-4" />
-                <span>{label}</span>
+                {item.icon}
+                <span>{item.label}</span>
               </Link>
             ))}
           </div>
 
-          {/* Desktop User Menu & Language Toggle */}
-          <div className="hidden md:flex items-center space-x-3">
-            {/* Language Dropdown */}
-            <div className="relative" ref={languageRef}>
+          {/* Search Bar */}
+          <div className="hidden lg:flex flex-1 max-w-md mx-8">
+            <div className="relative w-full">
+              <Search className={`absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 ${
+                scrolled ? 'text-gray-400' : 'text-white/60'
+              }`} />
+              <input
+                type="text"
+                placeholder={t('검색...', 'Search...')}
+                className={`w-full pl-12 pr-4 py-3 rounded-2xl transition-all duration-300 ${
+                  scrolled
+                    ? 'bg-gray-50 border-2 border-gray-200 focus:border-mint-400 focus:ring-4 focus:ring-mint-100'
+                    : 'bg-white/20 backdrop-blur-sm border-2 border-white/30 text-white placeholder-white/60 focus:bg-white/30 focus:border-white/50'
+                }`}
+              />
+              <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                <Sparkles className={`h-5 w-5 ${scrolled ? 'text-mint-500' : 'text-white/80'} animate-pulse`} />
+              </div>
+            </div>
+          </div>
+
+          {/* Right Section */}
+          <div className="flex items-center space-x-3">
+            {/* Language Switcher */}
+            <button
+              onClick={() => setLanguage(language === 'ko' ? 'en' : 'ko')}
+              className={`flex items-center space-x-2 px-4 py-2.5 rounded-2xl font-medium transition-all duration-300 ${
+                scrolled
+                  ? 'bg-gray-50 text-gray-600 hover:bg-mint-50 hover:text-mint-600'
+                  : 'bg-white/20 text-white hover:bg-white/30'
+              }`}
+            >
+              <Globe className="h-4 w-4" />
+              <span className="text-sm">{language === 'ko' ? 'EN' : '한'}</span>
+            </button>
+
+            {/* Notifications */}
+            <div className="relative">
               <button
-                onClick={() => setIsLanguageOpen(!isLanguageOpen)}
-                className="flex items-center space-x-2 px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 border border-gray-200 hover:border-blue-200"
+                onClick={() => setShowNotifications(!showNotifications)}
+                className={`relative p-2.5 rounded-2xl transition-all duration-300 ${
+                  scrolled
+                    ? 'bg-gray-50 text-gray-600 hover:bg-mint-50 hover:text-mint-600'
+                    : 'bg-white/20 text-white hover:bg-white/30'
+                }`}
               >
-                <Globe className="h-4 w-4" />
-                <span className="flex items-center space-x-1">
-                  <span>{currentLanguage?.flag}</span>
-                  <span>{currentLanguage?.label}</span>
-                </span>
-                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isLanguageOpen ? 'rotate-180' : ''}`} />
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
               </button>
 
-              {isLanguageOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
-                  {languageOptions.map((lang) => (
-                    <button
-                      key={lang.code}
-                      onClick={() => {
-                        if (lang.code !== language) {
-                          toggleLanguage();
-                        }
-                        setIsLanguageOpen(false);
-                      }}
-                      className={`w-full flex items-center space-x-3 px-4 py-2 text-sm hover:bg-blue-50 transition-colors duration-200 ${
-                        lang.code === language ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'
-                      }`}
-                    >
-                      <span className="text-lg">{lang.flag}</span>
-                      <span>{lang.label}</span>
-                      {lang.code === language && (
-                        <div className="ml-auto w-2 h-2 bg-blue-600 rounded-full"></div>
-                      )}
-                    </button>
-                  ))}
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                  <div className="p-4 bg-gradient-to-r from-mint-500 to-ocean-500 text-white">
+                    <h3 className="font-semibold">{t('알림', 'Notifications')}</h3>
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {notifications.map((notif) => (
+                      <div key={notif.id} className="p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <p className="text-sm text-gray-700">{notif.text}</p>
+                        <p className="text-xs text-gray-400 mt-1">{notif.time}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
 
+            {/* User Menu */}
             {user ? (
-              <div className="relative" ref={profileRef}>
-                <button
-                  onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center space-x-2 px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 border border-gray-200 hover:border-blue-200"
-                >
-                  <User className="h-4 w-4" />
-                  <span className="hidden lg:inline">{user.email?.split('@')[0]}</span>
-                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
+              <div className="relative group">
+                <button className={`flex items-center space-x-3 px-4 py-2.5 rounded-2xl transition-all duration-300 ${
+                  scrolled
+                    ? 'bg-gradient-to-r from-mint-500 to-ocean-500 text-white shadow-lg hover:shadow-xl'
+                    : 'bg-white/20 text-white hover:bg-white/30'
+                }`}>
+                  <div className="h-8 w-8 rounded-full bg-white/30 flex items-center justify-center">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <span className="font-medium hidden sm:block">{user.email?.split('@')[0]}</span>
                 </button>
 
-                {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
-                    {profileMenuItems.map((item, index) => {
-                      if (item.type === 'divider') {
-                        return (
-                          <div key={index} className="px-4 py-2">
-                            <div className="border-t border-gray-200 mb-2"></div>
-                            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                              {item.label}
-                            </span>
-                          </div>
-                        );
-                      }
-
-                      if (!item.path || !item.icon) return null;
-
-                      const Icon = item.icon;
-                      return (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          onClick={() => setIsProfileOpen(false)}
-                          className={`flex items-center space-x-3 px-4 py-2 text-sm hover:bg-blue-50 transition-colors duration-200 ${
-                            isActive(item.path) ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'
-                          }`}
-                        >
-                          <Icon className="h-4 w-4" />
-                          <span>{item.label}</span>
-                          {isActive(item.path) && (
-                            <div className="ml-auto w-2 h-2 bg-blue-600 rounded-full"></div>
-                          )}
-                        </Link>
-                      );
-                    })}
-                    
-                    <div className="border-t border-gray-200 my-2"></div>
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform group-hover:translate-y-0 translate-y-2">
+                  <div className="p-4 border-b border-gray-100">
+                    <p className="font-semibold text-gray-800">{user.email?.split('@')[0]}</p>
+                    <p className="text-sm text-gray-500">{user.email}</p>
+                  </div>
+                  <div className="py-2">
+                    {userMenuItems.map((item) => (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-mint-50 hover:text-mint-600 transition-colors"
+                      >
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </Link>
+                    ))}
                     <button
                       onClick={handleSignOut}
-                      className="flex items-center space-x-3 px-4 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors duration-200 w-full"
+                      className="w-full flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors"
                     >
                       <LogOut className="h-4 w-4" />
                       <span>{t('로그아웃', 'Sign Out')}</span>
                     </button>
                   </div>
-                )}
+                </div>
               </div>
             ) : (
-              <Link to="/auth">
-                <ColorfulButton size="sm" className="shadow-lg hover:shadow-xl transition-all duration-300">
-                  {t('로그인', 'Sign In')}
-                </ColorfulButton>
+              <Link
+                to="/auth"
+                className={`px-6 py-2.5 rounded-2xl font-medium transition-all duration-300 ${
+                  scrolled
+                    ? 'bg-gradient-to-r from-mint-500 to-ocean-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
+                    : 'bg-white text-mint-600 hover:bg-white/90 shadow-lg'
+                }`}
+              >
+                {t('로그인', 'Sign In')}
               </Link>
             )}
-          </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
+            {/* Mobile menu button */}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="text-gray-700 hover:text-blue-600 focus:outline-none focus:text-blue-600 transition-colors duration-200 p-2 rounded-lg hover:bg-blue-50"
+              className={`md:hidden p-2.5 rounded-2xl transition-all duration-300 ${
+                scrolled
+                  ? 'bg-gray-50 text-gray-600 hover:bg-mint-50'
+                  : 'bg-white/20 text-white hover:bg-white/30'
+              }`}
             >
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Mobile Navigation */}
-      {isOpen && (
-        <div className="md:hidden bg-white border-t border-gray-200 shadow-lg">
-          <div className="px-4 pt-4 pb-6 space-y-2">
-            {/* Main Navigation */}
-            {navItems.map(({ path, icon: Icon, label }) => (
-              <Link
-                key={path}
-                to={path}
-                onClick={() => setIsOpen(false)}
-                className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${
-                  isActive(path)
-                    ? 'bg-gradient-primary text-white shadow-lg'
-                    : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
-                }`}
-              >
-                <Icon className="h-5 w-5" />
-                <span>{label}</span>
-              </Link>
-            ))}
-
-            {/* User Menu Items for Mobile */}
-            {user && (
-              <>
-                <div className="border-t border-gray-200 my-4"></div>
-                <div className="px-2 mb-3">
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    {t('내 계정', 'My Account')}
-                  </span>
-                </div>
-                
-                {profileMenuItems.map((item, index) => {
-                  if (item.type === 'divider') {
-                    return (
-                      <div key={index} className="px-2 py-2">
-                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                          {item.label}
-                        </span>
-                      </div>
-                    );
-                  }
-
-                  if (!item.path || !item.icon) return null;
-
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      onClick={() => setIsOpen(false)}
-                      className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${
-                        isActive(item.path) 
-                          ? 'bg-gradient-primary text-white shadow-lg'
-                          : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
-                      }`}
-                    >
-                      <Icon className="h-5 w-5" />
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </>
-            )}
-
-            <div className="border-t border-gray-200 my-4"></div>
-            
-            {/* Language Selection for Mobile */}
-            <div className="px-2 mb-3">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                {t('언어 설정', 'Language')}
-              </span>
-            </div>
-            {languageOptions.map((lang) => (
-              <button
-                key={lang.code}
-                onClick={() => {
-                  if (lang.code !== language) {
-                    toggleLanguage();
-                  }
-                  setIsOpen(false);
-                }}
-                className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 w-full ${
-                  lang.code === language
-                    ? 'bg-blue-50 text-blue-600 border border-blue-200'
-                    : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
-                }`}
-              >
-                <span className="text-lg">{lang.flag}</span>
-                <span>{lang.label}</span>
-                {lang.code === language && (
-                  <div className="ml-auto w-2 h-2 bg-blue-600 rounded-full"></div>
-                )}
-              </button>
-            ))}
-
-            {user ? (
-              <>
-                <div className="border-t border-gray-200 my-4"></div>
-                <button
-                  onClick={handleSignOut}
-                  className="flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200 w-full"
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span>{t('로그아웃', 'Sign Out')}</span>
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="border-t border-gray-200 my-4"></div>
+        {/* Mobile Navigation */}
+        {isOpen && (
+          <div className="md:hidden py-4 border-t border-white/20">
+            <div className="space-y-2">
+              {navItems.map((item) => (
                 <Link
-                  to="/auth"
+                  key={item.path}
+                  to={item.path}
                   onClick={() => setIsOpen(false)}
-                  className="block px-4 py-2"
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all duration-300 ${
+                    location.pathname === item.path
+                      ? 'bg-gradient-to-r from-mint-500 to-ocean-500 text-white shadow-lg'
+                      : scrolled
+                        ? 'text-gray-600 hover:bg-mint-50 hover:text-mint-600'
+                        : 'text-white/80 hover:bg-white/10 hover:text-white'
+                  }`}
                 >
-                  <ColorfulButton size="sm" className="w-full shadow-lg">
-                    {t('로그인', 'Sign In')}
-                  </ColorfulButton>
+                  {item.icon}
+                  <span>{item.label}</span>
                 </Link>
-              </>
-            )}
+              ))}
+              {user && userMenuItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setIsOpen(false)}
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all duration-300 ${
+                    scrolled
+                      ? 'text-gray-600 hover:bg-mint-50 hover:text-mint-600'
+                      : 'text-white/80 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </nav>
   );
 };
