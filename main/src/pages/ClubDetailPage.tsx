@@ -217,7 +217,7 @@ export const ClubDetailPage: React.FC = () => {
           </ColorfulCard>
 
           {/* Enhanced Activities */}
-          <ColorfulCard variant="mint" className="border-0 shadow-2xl">
+          <ColorfulCard variant="glass" className="border-0 shadow-2xl">
             <div className="p-10">
               <div className="flex items-center mb-8">
                 <div className="bg-gradient-to-r from-blue-500 to-mint-500 rounded-full p-4 mr-6 shadow-lg">
@@ -244,7 +244,7 @@ export const ClubDetailPage: React.FC = () => {
           </ColorfulCard>
 
           {/* Enhanced Requirements */}
-          <ColorfulCard variant="ocean" className="border-0 shadow-2xl">
+          <ColorfulCard variant="glass" className="border-0 shadow-2xl">
             <div className="p-10">
               <div className="flex items-center mb-8">
                 <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-full p-4 mr-6 shadow-lg">

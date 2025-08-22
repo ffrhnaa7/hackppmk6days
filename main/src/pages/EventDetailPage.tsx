@@ -141,7 +141,7 @@ export const EventDetailPage: React.FC = () => {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Quick Info */}
-          <ColorfulCard variant="mint" className="p-6">
+          <ColorfulCard variant="glass" className="p-6">
             <h3 className="font-semibold text-gray-800 mb-4">
               {t('이벤트 정보', 'Event Info')}
             </h3>

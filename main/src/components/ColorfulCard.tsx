@@ -3,7 +3,7 @@ import React from 'react';
 interface ColorfulCardProps {
   children: React.ReactNode;
   className?: string;
-  variant?: 'default' | 'glass' | 'gradient' | 'mint' | 'ocean';
+  variant?: 'default' | 'gradient' | 'glass' | 'bordered';
   hover?: boolean;
 }
 
@@ -13,18 +13,19 @@ export const ColorfulCard: React.FC<ColorfulCardProps> = ({
   variant = 'default',
   hover = true
 }) => {
-  const baseClasses = `rounded-2xl shadow-lg transition-all duration-300 ${hover ? 'hover:shadow-xl hover:scale-105' : ''}`;
+  const baseClasses = 'rounded-2xl transition-all duration-300';
   
   const variantClasses = {
-    default: 'bg-white border border-mint-100',
-    glass: 'bg-white/80 backdrop-blur-sm border border-white/20',
-    gradient: 'bg-gradient-card border border-mint-100',
-    mint: 'bg-gradient-to-br from-mint-50 to-mint-100 border border-mint-200',
-    ocean: 'bg-gradient-to-br from-ocean-50 to-ocean-100 border border-ocean-200'
+    default: 'bg-white shadow-lg border border-gray-100',
+    gradient: 'bg-gradient-to-br from-white via-mint-50 to-blue-50 shadow-xl',
+    glass: 'bg-white/80 backdrop-blur-lg shadow-xl border border-white/20',
+    bordered: 'bg-white border-2 border-mint-200 shadow-md'
   };
 
+  const hoverClasses = hover ? 'hover:shadow-2xl hover:scale-[1.02]' : '';
+
   return (
-    <div className={`${baseClasses} ${variantClasses[variant]} ${className}`}>
+    <div className={`${baseClasses} ${variantClasses[variant]} ${hoverClasses} ${className}`}>
       {children}
     </div>
   );
