@@ -1,5 +1,5 @@
 // Mobile build configuration for Korean Campus Connect
-export default {
+module.exports = {
   name: "korean-campus-connect",
   displayName: "Korean Campus Connect",
   version: "1.0.0",
@@ -24,7 +24,6 @@ export default {
     keywords: ["korean", "campus", "events", "clubs", "cultural"],
     platform: "web"
   },
-  // Ensure all required properties are explicitly set
   settings: {
     isPublic: true,
     enableAnalytics: false,
